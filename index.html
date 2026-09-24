@@ -4,21 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Mein Vorrat</title>
+    <title>HomeInventory</title>
 
     <link rel="stylesheet" href="style.css">
 
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#111827">
+
+<link
+    rel="apple-touch-icon"
+    href="icon-192.png"
+>
+
 </head>
 
 <body>
 
     <main class="app">
 
-        <h1>Mein Vorrat</h1>
+        <h1>HomeInventory</h1>
 
         <p class="subtitle">
-            Haushalts-Lagersystem
+            Dein digitaler Haushaltsbestand und Einkaufslisten-Manager. Scanne Barcodes, 
+            verwalte Artikel und behalte den Überblick über deinen Haushalt.
         </p>
 
         <div class="menu">
@@ -115,7 +126,11 @@
             </button>
 
         </section> 
-
+        
+        <footer class="footer">
+            © 2026 The_Masked_Mind · HomeInventory
+        </footer>
+    
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
