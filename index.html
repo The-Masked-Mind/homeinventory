@@ -1,0 +1,126 @@
+ <!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Mein Vorrat</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+
+<body>
+
+    <main class="app">
+
+        <h1>Mein Vorrat</h1>
+
+        <p class="subtitle">
+            Haushalts-Lagersystem
+        </p>
+
+        <div class="menu">
+
+            <button id="scanButton">
+                📷 Barcode scannen
+            </button>
+
+            <button id="shoppingListButton">
+                🛒 Einkaufsliste
+            </button>
+
+            <button id="stockButton">
+                📦 Bestand
+            </button>
+
+            <button id="manageButton">
+                ⚙️ Artikelverwaltung
+            </button>
+
+        </div>
+
+        <section id="scannerArea" class="hidden">
+
+            <h2>Barcode scannen</h2>
+
+            <div id="reader"></div>
+
+            <div id="scanResult">
+                Noch kein Barcode erkannt.
+            </div>
+
+            <div class="manual-entry">
+
+                <p>Barcode alternativ manuell eingeben:</p>
+
+                <input
+                    type="text"
+                    id="manualBarcode"
+                    placeholder="Barcode eingeben"
+                    inputmode="numeric"
+              >
+
+              <button id="manualSearchButton">
+                  Produkt suchen
+              </button>
+
+             </div>
+
+            <button id="closeScanner">
+              Scanner schließen
+            </button>
+
+        </section>
+    
+        <section id="shoppingListArea" class="hidden">
+
+            <h2>Einkaufsliste</h2>
+
+            <div id="shoppingListContent">
+                Noch keine Artikel auf der Einkaufsliste.
+            </div>
+
+            <button id="closeShoppingList">
+                Einkaufsliste schließen
+            </button>
+
+        </section>
+
+        <section id="stockArea" class="hidden">
+
+            <h2>Bestand</h2>
+
+            <div id="stockContent">
+                Noch keine Artikel im Bestand.
+            </div>
+
+            <button id="closeStock">
+                Bestand schließen
+            </button>
+            
+        </section>  
+    
+        <section id="manageArea" class="hidden">
+
+            <h2>Artikelverwaltung</h2>
+
+            <div id="manageContent">
+                Noch keine Artikel zur Verwaltung.
+            </div>
+
+            <button id="closeManage">
+                Artikelverwaltung schließen
+            </button>
+
+        </section> 
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="app.js"></script>
+
+</body>
+</html>
