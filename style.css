@@ -290,7 +290,7 @@ button:hover {
 .app-header img {
     display: block;
     width: 100%;
-    max-width: 260px;
+    max-width: 180px;
     height: auto;
     margin: 0 auto;
 }
