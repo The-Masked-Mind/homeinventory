@@ -281,3 +281,16 @@ button:hover {
     font-size: 12px;
     color: #6b7280;
 }
+
+.app-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.app-header img {
+    display: block;
+    width: 100%;
+    max-width: 420px;
+    height: auto;
+    margin: 0 auto;
+}
