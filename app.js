@@ -52,8 +52,12 @@ const manualSearchButton = document.getElementById("manualSearchButton");
 let scanner = null;
 let letzterBarcode = null;
 
-scanButton.addEventListener("click", startScanner);
-closeScannerButton.addEventListener("click", stopScanner);
+scanButton.addEventListener("click", async () => {
+
+    await alleBereicheSchliessen();
+
+    startScanner();
+});
 
 manualSearchButton.addEventListener("click", async () => {
 
@@ -80,46 +84,31 @@ manualSearchButton.addEventListener("click", async () => {
     await produktSuchen(barcode);
 });
 
-shoppingListButton.addEventListener("click", () => {
+shoppingListButton.addEventListener("click", async () => {
 
-    einkaufslisteAnzeigen();
+    await alleBereicheSchliessen();
+
+    await einkaufslisteAnzeigen();
 
     shoppingListArea.classList.remove("hidden");
-
 });
 
-closeShoppingList.addEventListener("click", () => {
+stockButton.addEventListener("click", async () => {
 
-    shoppingListArea.classList.add("hidden");
+    await alleBereicheSchliessen();
 
-});
-
-stockButton.addEventListener("click", () => {
-
-    bestandAnzeigen();
+    await bestandAnzeigen();
 
     stockArea.classList.remove("hidden");
-
 });
 
-closeStock.addEventListener("click", () => {
+manageButton.addEventListener("click", async () => {
 
-    stockArea.classList.add("hidden");
+    await alleBereicheSchliessen();
 
-});
-
-manageButton.addEventListener("click", () => {
-
-    artikelverwaltungAnzeigen();
+    await artikelverwaltungAnzeigen();
 
     manageArea.classList.remove("hidden");
-
-});
-
-closeManage.addEventListener("click", () => {
-
-    manageArea.classList.add("hidden");
-
 });
 
 async function artikelverwaltungAnzeigen() {
@@ -355,6 +344,28 @@ async function artikelBearbeiten(barcode) {
 
         });
 }
+
+async function alleBereicheSchliessen() {
+
+    // Falls Scanner läuft: Kamera wirklich ausschalten
+    if (scanner) {
+
+        try {
+            await scanner.stop();
+            scanner.clear();
+        } catch (error) {
+            console.error("Scanner konnte nicht beendet werden:", error);
+        }
+
+        scanner = null;
+        letzterBarcode = null;
+    }
+
+    scannerArea.classList.add("hidden");
+    shoppingListArea.classList.add("hidden");
+    stockArea.classList.add("hidden");
+    manageArea.classList.add("hidden");
+} 
 
 async function artikelAenderungenSpeichern(barcode) {
 
