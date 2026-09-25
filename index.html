@@ -18,7 +18,89 @@
 
 <body>
 
-    <main class="app">
+    <section id="authArea">
+
+       <div class="auth-box">
+
+           <h2>HomeInventory</h2>
+
+           <p id="authInfo">
+               Bitte anmelden oder ein Konto erstellen.
+           </p>
+
+           <input
+               type="email"
+               id="authEmail"
+               placeholder="E-Mail-Adresse"
+           >
+
+           <input
+               type="password"
+               id="authPassword"
+               placeholder="Passwort"
+           >
+
+           <button id="loginButton">
+               Anmelden
+           </button>
+
+           <button id="registerButton">
+               Konto erstellen
+           </button>
+
+           <button id="googleLoginButton">
+               Mit Google anmelden
+           </button>
+
+        </div>
+
+    </section>
+
+    <section id="householdArea" class="hidden">
+
+    <div class="auth-box">
+
+        <h2>Haushalt einrichten</h2>
+
+        <p id="householdInfo">
+            Erstelle einen neuen Haushalt oder tritt einem bestehenden bei.
+        </p>
+
+        <h3>Neuen Haushalt erstellen</h3>
+
+        <input
+            type="text"
+            id="householdName"
+            placeholder="Name des Haushalts"
+        >
+
+        <button id="createHouseholdButton">
+            Haushalt erstellen
+        </button>
+
+        <hr>
+
+        <h3>Bestehendem Haushalt beitreten</h3>
+
+        <input
+            type="text"
+            id="inviteCodeInput"
+            placeholder="Einladungscode"
+        >
+
+        <button id="joinHouseholdButton">
+            Haushalt beitreten
+        </button>
+
+        <button id="householdLogoutButton">
+            Abmelden
+        </button>
+
+    </div>
+
+    </section>
+
+    <main class="app hidden" id="appArea">
 
         <div class="app-header">
             <img src="homeinventory-logo.png" alt="HomeInventory">
@@ -95,6 +177,12 @@
 
             <h2>Bestand</h2>
 
+            <input
+                type="text"
+                id="stockSearch"
+                placeholder="Artikel suchen..."
+            >
+
             <div id="stockContent">
                 Noch keine Artikel im Bestand.
             </div>
@@ -109,6 +197,12 @@
 
             <h2>Artikelverwaltung</h2>
 
+            <input
+                type="text"
+                id="manageSearch"
+                placeholder="Artikel suchen..."
+            >
+
             <div id="manageContent">
                 Noch keine Artikel zur Verwaltung.
             </div>
@@ -122,14 +216,18 @@
         <footer class="footer">
             © 2026 The_Masked_Mind · HomeInventory
         </footer>
-    
+
+        <button id="logoutButton">
+           Abmelden
+        </button>
+
     </main>
 
     <link rel="stylesheet" href="style.css?v=2">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=10"></script>
 
 </body>
 </html>

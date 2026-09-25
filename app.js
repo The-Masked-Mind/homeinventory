@@ -1,10 +1,69 @@
-const SUPABASE_URL = "https://fmsdrfeyjdgdjmnydgdg.supabase.co";
-const SUPABASE_KEY = "sb_publishable_H8Q6dYQF5N6X1n-O9KH3Qg_4VmBViNN";
+/* =========================================================
+   HOMEINVENTORY
+   Login + Google + Haushalte + Bestand
+========================================================= */
 
-const supabaseClient = supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
+
+/* =========================================================
+   ELEMENTE
+========================================================= */
+
+const googleLoginButton =
+    document.getElementById("googleLoginButton");
+
+const householdArea =
+    document.getElementById("householdArea");
+
+const householdInfo =
+    document.getElementById("householdInfo");
+
+const householdName =
+    document.getElementById("householdName");
+
+const inviteCodeInput =
+    document.getElementById("inviteCodeInput");
+
+const createHouseholdButton =
+    document.getElementById("createHouseholdButton");
+
+const joinHouseholdButton =
+    document.getElementById("joinHouseholdButton");
+
+const householdLogoutButton =
+    document.getElementById("householdLogoutButton");
+
+
+const authArea =
+    document.getElementById("authArea");
+
+const appArea =
+    document.getElementById("appArea");
+
+const authEmail =
+    document.getElementById("authEmail");
+
+const authPassword =
+    document.getElementById("authPassword");
+
+const authInfo =
+    document.getElementById("authInfo");
+
+const loginButton =
+    document.getElementById("loginButton");
+
+const registerButton =
+    document.getElementById("registerButton");
+
+const logoutButton =
+    document.getElementById("logoutButton");
+
+
+const manageSearch =
+    document.getElementById("manageSearch");
+
+const stockSearch =
+    document.getElementById("stockSearch");
+
 
 const manageButton =
     document.getElementById("manageButton");
@@ -17,7 +76,8 @@ const manageContent =
 
 const closeManage =
     document.getElementById("closeManage");
-    
+
+
 const stockButton =
     document.getElementById("stockButton");
 
@@ -30,6 +90,7 @@ const stockContent =
 const closeStock =
     document.getElementById("closeStock");
 
+
 const shoppingListButton =
     document.getElementById("shoppingListButton");
 
@@ -41,684 +102,1233 @@ const shoppingListContent =
 
 const closeShoppingList =
     document.getElementById("closeShoppingList");
-    
-const scanButton = document.getElementById("scanButton");
-const closeScannerButton = document.getElementById("closeScanner");
-const scannerArea = document.getElementById("scannerArea");
-const scanResult = document.getElementById("scanResult");
-const manualBarcode = document.getElementById("manualBarcode");
-const manualSearchButton = document.getElementById("manualSearchButton");
+
+
+const scanButton =
+    document.getElementById("scanButton");
+
+const closeScannerButton =
+    document.getElementById("closeScanner");
+
+const scannerArea =
+    document.getElementById("scannerArea");
+
+const scanResult =
+    document.getElementById("scanResult");
+
+const manualBarcode =
+    document.getElementById("manualBarcode");
+
+const manualSearchButton =
+    document.getElementById("manualSearchButton");
+
+
+/* =========================================================
+   SUPABASE
+========================================================= */
+
+const SUPABASE_URL =
+    "https://fmsdrfeyjdgdjmnydgdg.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_H8Q6dYQF5N6X1n-O9KH3Qg_4VmBViNN";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+/* =========================================================
+   STATUS
+========================================================= */
 
 let scanner = null;
+
 let letzterBarcode = null;
 
-scanButton.addEventListener("click", async () => {
+let aktuellerHaushaltId = null;
 
-    await alleBereicheSchliessen();
+let aktuellerHaushalt = null;
 
-    startScanner();
-});
 
-manualSearchButton.addEventListener("click", async () => {
+/* =========================================================
+   HILFSFUNKTIONEN
+========================================================= */
 
-    const barcode = manualBarcode.value.trim();
+function escapeHtml(wert) {
 
-    if (!barcode) {
-        alert("Bitte einen Barcode eingeben.");
-        return;
-    }
-
-    if (!/^\d+$/.test(barcode)) {
-        alert("Der Barcode darf nur Zahlen enthalten.");
-        return;
-    }
-
-    scanResult.innerHTML = `
-        <strong>Barcode eingegeben</strong>
-        <br><br>
-        ${barcode}
-        <br><br>
-        Produkt wird gesucht...
-    `;
-
-    await produktSuchen(barcode);
-});
-
-shoppingListButton.addEventListener("click", async () => {
-
-    await alleBereicheSchliessen();
-
-    await einkaufslisteAnzeigen();
-
-    shoppingListArea.classList.remove("hidden");
-});
-
-stockButton.addEventListener("click", async () => {
-
-    await alleBereicheSchliessen();
-
-    await bestandAnzeigen();
-
-    stockArea.classList.remove("hidden");
-});
-
-manageButton.addEventListener("click", async () => {
-
-    await alleBereicheSchliessen();
-
-    await artikelverwaltungAnzeigen();
-
-    manageArea.classList.remove("hidden");
-});
-
-async function artikelverwaltungAnzeigen() {
-
-    const { data: artikel, error } =
-        await supabaseClient
-            .from("artikel")
-            .select("*")
-            .order("name", { ascending: true });
-
-    if (error) {
-        console.error(
-            "Fehler beim Laden der Artikelverwaltung:",
-            error
-        );
-
-        manageContent.innerHTML = `
-            <p>
-                Artikel konnten nicht geladen werden.
-            </p>
-        `;
-
-        return;
-    }
-
-    if (!artikel || artikel.length === 0) {
-
-        manageContent.innerHTML = `
-            <p>
-                Noch keine Artikel gespeichert.
-            </p>
-        `;
-
-        return;
-    }
-
-    manageContent.innerHTML =
-        artikel.map(produkt => {
-
-            return `
-                <div class="manage-item">
-
-                    <div>
-                        <strong>
-                            ${produkt.name}
-                        </strong>
-
-                        <small>
-                            Barcode:
-                            ${produkt.barcode}
-                        </small>
-                    </div>
-
-                    <button
-                        class="editButton"
-                        data-barcode="${produkt.barcode}"
-                    >
-                        Bearbeiten
-                    </button>
-
-                </div>
-            `;
-
-        }).join("");
-
-    document
-        .querySelectorAll(".editButton")
-        .forEach(button => {
-
-            button.addEventListener("click", () => {
-
-                artikelBearbeiten(
-                    button.dataset.barcode
-                );
-
-            });
-
-        });
+    return String(wert ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 }
 
-async function artikelBearbeiten(barcode) {
-
-    const { data: treffer, error } =
-        await supabaseClient
-            .from("artikel")
-            .select("*")
-            .eq("barcode", barcode)
-            .limit(1);
-
-    if (error) {
-        console.error(
-            "Fehler beim Laden des Artikels:",
-            error
-        );
-        return;
-    }
-
-    if (!treffer || treffer.length === 0) {
-        alert("Artikel wurde nicht gefunden.");
-        return;
-    }
-
-    const produkt = treffer[0];
-
-    manageContent.innerHTML = `
-        <div class="artikel-formular">
-
-            <h3>Artikel bearbeiten</h3>
-
-            <label>Produktname</label>
-
-            <input
-                id="editName"
-                type="text"
-                value="${produkt.name}"
-            >
-
-            <label>Marke</label>
-
-            <input
-                id="editMarke"
-                type="text"
-                value="${produkt.marke || ""}"
-            >
-
-            <label>Kategorie</label>
-
-            <select id="editKategorie">
-
-                <option value="Kühlschrank">
-                    Kühlschrank
-                </option>
-
-                <option value="Vorrat">
-                    Vorratsschrank
-                </option>
-
-                <option value="Getränke">
-                    Getränke
-                </option>
-
-                <option value="Gefrierschrank">
-                    Gefrierschrank
-                </option>
-
-                <option value="Sonstiges">
-                    Sonstiges
-                </option>
-
-            </select>
-
-            <label>Einheit</label>
-
-            <select id="editEinheit">
-
-                <option value="Stück">Stück</option>
-                <option value="Packung">Packung</option>
-                <option value="Flasche">Flasche</option>
-                <option value="Glas">Glas</option>
-                <option value="Dose">Dose</option>
-
-            </select>
-
-            <label>Aktueller Bestand</label>
-
-            <input
-                id="editBestand"
-                type="number"
-                min="0"
-                value="${produkt.bestand}"
-            >
-
-            <label>Mindestbestand</label>
-
-            <input
-                id="editMindestbestand"
-                type="number"
-                min="0"
-                value="${produkt.mindestbestand}"
-            >
-
-            <label>Sollbestand</label>
-
-            <input
-                id="editSollbestand"
-                type="number"
-                min="0"
-                value="${produkt.sollbestand}"
-            >
-
-            <button id="saveEditButton">
-                Änderungen speichern
-            </button>
-
-            <button id="deleteArticleButton">
-                Artikel löschen
-            </button>
-
-            <button id="cancelEditButton">
-                Zurück
-            </button>
-
-        </div>
-    `;
-
-    document.getElementById("editKategorie").value =
-        produkt.kategorie;
-
-    document.getElementById("editEinheit").value =
-        produkt.einheit;
-
-    document
-        .getElementById("saveEditButton")
-        .addEventListener("click", () => {
-
-            artikelAenderungenSpeichern(barcode);
-
-        });
-
-    document
-        .getElementById("deleteArticleButton")
-        .addEventListener("click", () => {
-
-            artikelLoeschen(barcode);
-
-        });
-
-    document
-        .getElementById("cancelEditButton")
-        .addEventListener("click", () => {
-
-            artikelverwaltungAnzeigen();
-
-        });
-}
 
 async function alleBereicheSchliessen() {
 
-    // Falls Scanner läuft: Kamera wirklich ausschalten
     if (scanner) {
 
         try {
+
             await scanner.stop();
+
             scanner.clear();
+
         } catch (error) {
-            console.error("Scanner konnte nicht beendet werden:", error);
+
+            console.error(
+                "Scanner konnte nicht beendet werden:",
+                error
+            );
         }
 
         scanner = null;
+
         letzterBarcode = null;
     }
 
-    scannerArea.classList.add("hidden");
-    shoppingListArea.classList.add("hidden");
-    stockArea.classList.add("hidden");
-    manageArea.classList.add("hidden");
-} 
 
-async function artikelAenderungenSpeichern(barcode) {
-
-    const aenderungen = {
-
-        name:
-            document.getElementById("editName").value.trim(),
-
-        marke:
-            document.getElementById("editMarke").value.trim(),
-
-        kategorie:
-            document.getElementById("editKategorie").value,
-
-        einheit:
-            document.getElementById("editEinheit").value,
-
-        bestand:
-            Number(
-                document.getElementById("editBestand").value
-            ),
-
-        mindestbestand:
-            Number(
-                document.getElementById("editMindestbestand").value
-            ),
-
-        sollbestand:
-            Number(
-                document.getElementById("editSollbestand").value
-            )
-    };
-
-    if (!aenderungen.name) {
-        alert("Bitte einen Produktnamen eingeben.");
-        return;
+    if (scannerArea) {
+        scannerArea.classList.add("hidden");
     }
 
-    const { error } =
-        await supabaseClient
-            .from("artikel")
-            .update(aenderungen)
-            .eq("barcode", barcode);
-
-    if (error) {
-
-        console.error(
-            "Fehler beim Speichern:",
-            error
-        );
-
-        alert("Änderungen konnten nicht gespeichert werden.");
-        return;
+    if (shoppingListArea) {
+        shoppingListArea.classList.add("hidden");
     }
 
-    artikelverwaltungAnzeigen();
+    if (stockArea) {
+        stockArea.classList.add("hidden");
+    }
+
+    if (manageArea) {
+        manageArea.classList.add("hidden");
+    }
 }
 
-async function artikelLoeschen(barcode) {
 
-    const bestaetigt =
-        confirm(
-            "Soll dieser Artikel wirklich gelöscht werden?"
-        );
+/* =========================================================
+   SESSION PRÜFEN
+========================================================= */
 
-    if (!bestaetigt) {
-        return;
+async function sessionPruefen() {
+
+    const {
+        data: { session }
+    } =
+        await supabaseClient.auth.getSession();
+
+
+    if (session) {
+
+        authArea.classList.add("hidden");
+
+        householdArea.classList.add("hidden");
+
+        appArea.classList.add("hidden");
+
+        await haushaltPruefen();
+
+    } else {
+
+        aktuellerHaushaltId = null;
+
+        aktuellerHaushalt = null;
+
+        authArea.classList.remove("hidden");
+
+        householdArea.classList.add("hidden");
+
+        appArea.classList.add("hidden");
     }
-
-    const { error } =
-        await supabaseClient
-            .from("artikel")
-            .delete()
-            .eq("barcode", barcode);
-
-    if (error) {
-
-        console.error(
-            "Fehler beim Löschen:",
-            error
-        );
-
-        alert("Artikel konnte nicht gelöscht werden.");
-        return;
-    }
-
-    artikelverwaltungAnzeigen();
 }
 
-async function bestandAnzeigen() {
 
-    const { data: artikel, error } =
-        await supabaseClient
-            .from("artikel")
-            .select("*");
+/* =========================================================
+   REGISTRIERUNG
+========================================================= */
 
-    if (error) {
+registerButton.addEventListener(
+    "click",
+    async () => {
 
-        console.error(
-            "Fehler beim Laden des Bestands:",
-            error
-        );
+        const email =
+            authEmail.value.trim();
 
-        stockContent.innerHTML = `
-            <p>
-                Bestand konnte nicht geladen werden.
-            </p>
-        `;
+        const passwort =
+            authPassword.value;
 
-        return;
-    }
 
-    if (!artikel || artikel.length === 0) {
+        if (!email || !passwort) {
 
-        stockContent.innerHTML = `
-            <p>
-                Noch keine Artikel gespeichert.
-            </p>
-        `;
+            authInfo.textContent =
+                "Bitte E-Mail und Passwort eingeben.";
 
-        return;
-    }
-
-    const kategorien = {};
-
-    artikel.forEach(produkt => {
-
-        const kategorie =
-            produkt.kategorie || "Sonstiges";
-
-        if (!kategorien[kategorie]) {
-            kategorien[kategorie] = [];
+            return;
         }
 
-        kategorien[kategorie].push(produkt);
 
-    });
+        const {
+            data,
+            error
+        } =
+            await supabaseClient.auth.signUp({
 
-    let html = "";
+                email: email,
 
-    Object.keys(kategorien)
-        .sort()
-        .forEach(kategorie => {
+                password: passwort
+            });
 
-            html += `
-                <div class="stock-category">
 
-                    <h3>
-                        ${kategorie}
-                    </h3>
-            `;
+        if (error) {
 
-            kategorien[kategorie]
-                .sort((a, b) =>
-                    a.name.localeCompare(b.name)
-                )
-                .forEach(produkt => {
+            console.error(error);
 
-                    html += `
-                        <div class="stock-item">
+            authInfo.textContent =
+                "Registrierung fehlgeschlagen: " +
+                error.message;
 
-                            <strong>
-                                ${produkt.name}
-                            </strong>
+            return;
+        }
 
-                            <span>
-                                ${produkt.bestand}
-                                ${produkt.einheit}
-                            </span>
 
-                        </div>
-                    `;
+        authInfo.textContent =
+            "Konto erstellt ✓ Bitte bestätige jetzt deine E-Mail-Adresse.";
 
+
+        console.log(
+            "Registrierung:",
+            data
+        );
+    }
+);
+
+
+/* =========================================================
+   LOGIN MIT E-MAIL
+========================================================= */
+
+loginButton.addEventListener(
+    "click",
+    async () => {
+
+        const email =
+            authEmail.value.trim();
+
+        const passwort =
+            authPassword.value;
+
+
+        if (!email || !passwort) {
+
+            authInfo.textContent =
+                "Bitte E-Mail und Passwort eingeben.";
+
+            return;
+        }
+
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient.auth.signInWithPassword({
+
+                email: email,
+
+                password: passwort
+            });
+
+
+        if (error) {
+
+            console.error(error);
+
+
+            if (
+                error.message
+                    .toLowerCase()
+                    .includes("email not confirmed")
+            ) {
+
+                authInfo.textContent =
+                    "Bitte bestätige zuerst deine E-Mail-Adresse.";
+
+            } else {
+
+                authInfo.textContent =
+                    "Anmeldung fehlgeschlagen: " +
+                    error.message;
+            }
+
+            return;
+        }
+
+
+        authInfo.textContent =
+            "Anmeldung erfolgreich.";
+
+
+        console.log(
+            "Login:",
+            data
+        );
+
+
+        await haushaltPruefen();
+    }
+);
+
+
+/* =========================================================
+   GOOGLE LOGIN
+========================================================= */
+
+if (googleLoginButton) {
+
+    googleLoginButton.addEventListener(
+        "click",
+        async () => {
+
+            const {
+                error
+            } =
+                await supabaseClient.auth.signInWithOAuth({
+
+                    provider: "google",
+
+                    options: {
+
+                        redirectTo:
+                            "https://the-masked-mind.github.io/homeinventory/"
+                    }
                 });
 
-            html += `
-                </div>
-            `;
 
-        });
+            if (error) {
 
-    stockContent.innerHTML = html;
+                console.error(
+                    error
+                );
+
+                authInfo.textContent =
+                    "Google-Anmeldung fehlgeschlagen.";
+            }
+        }
+    );
 }
 
-async function einkaufslisteAnzeigen() {
 
-    const { data: artikel, error } =
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+logoutButton.addEventListener(
+    "click",
+    async () => {
+
+        await alleBereicheSchliessen();
+
+
+        const {
+            error
+        } =
+            await supabaseClient.auth.signOut();
+
+
+        if (error) {
+
+            console.error(
+                error
+            );
+
+            return;
+        }
+
+
+        authEmail.value = "";
+
+        authPassword.value = "";
+
+
+        aktuellerHaushaltId = null;
+
+        aktuellerHaushalt = null;
+
+
+        authArea.classList.remove("hidden");
+
+        householdArea.classList.add("hidden");
+
+        appArea.classList.add("hidden");
+
+
+        authInfo.textContent =
+            "Du wurdest abgemeldet.";
+    }
+);
+
+
+/* =========================================================
+   EINLADUNGSCODE ERZEUGEN
+========================================================= */
+
+function einladungscodeErzeugen() {
+
+    const zeichen =
+        "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+
+    let code =
+        "";
+
+
+    for (
+        let i = 0;
+        i < 6;
+        i++
+    ) {
+
+        code += zeichen.charAt(
+
+            Math.floor(
+
+                Math.random() *
+                zeichen.length
+            )
+        );
+    }
+
+
+    return code;
+}
+
+
+/* =========================================================
+   HAUSHALT PRÜFEN
+========================================================= */
+
+async function haushaltPruefen() {
+
+    const {
+        data: { user },
+        error: userFehler
+    } =
+        await supabaseClient.auth.getUser();
+
+
+    if (userFehler) {
+
+        console.error(
+            "Benutzer konnte nicht geladen werden:",
+            userFehler
+        );
+    }
+
+
+    if (!user) {
+
+        aktuellerHaushaltId = null;
+
+        aktuellerHaushalt = null;
+
+
+        authArea.classList.remove("hidden");
+
+        householdArea.classList.add("hidden");
+
+        appArea.classList.add("hidden");
+
+
+        return;
+    }
+
+
+    const {
+        data: mitgliedschaften,
+        error
+    } =
         await supabaseClient
-            .from("artikel")
-            .select("*");
+            .from("household_members")
+            .select(`
+                household_id,
+                role,
+                households (
+                    id,
+                    name,
+                    invite_code
+                )
+            `)
+            .eq(
+                "user_id",
+                user.id
+            );
+
 
     if (error) {
+
         console.error(
-            "Fehler beim Laden der Einkaufsliste:",
+            "Fehler beim Laden des Haushalts:",
             error
         );
 
-        shoppingListContent.innerHTML = `
-            <p>
-                Einkaufsliste konnte nicht geladen werden.
-            </p>
-        `;
+
+        authArea.classList.add("hidden");
+
+        householdArea.classList.remove("hidden");
+
+        appArea.classList.add("hidden");
+
+
+        householdInfo.textContent =
+            "Haushalt konnte nicht geladen werden.";
+
 
         return;
     }
 
-    const einkaufsliste =
-        artikel.filter(
-            produkt =>
-                produkt.bestand <= produkt.mindestbestand
-        );
 
-    if (einkaufsliste.length === 0) {
+    if (
+        !mitgliedschaften ||
+        mitgliedschaften.length === 0
+    ) {
 
-        shoppingListContent.innerHTML = `
-            <p>
-                Aktuell muss nichts nachgekauft werden. ✓
-            </p>
-        `;
+        aktuellerHaushaltId = null;
+
+        aktuellerHaushalt = null;
+
+
+        authArea.classList.add("hidden");
+
+        householdArea.classList.remove("hidden");
+
+        appArea.classList.add("hidden");
+
+
+        householdInfo.textContent =
+            "Erstelle einen neuen Haushalt oder tritt einem bestehenden bei.";
+
 
         return;
     }
 
-    shoppingListContent.innerHTML =
-        einkaufsliste.map(produkt => {
 
-            const kaufmenge =
-                Math.max(
-                    produkt.sollbestand - produkt.bestand,
-                    0
-                );
+    const mitgliedschaft =
+        mitgliedschaften[0];
 
-            return `
-                <div class="shopping-item">
 
-                    <strong>
-                        ${produkt.name}
-                    </strong>
+    aktuellerHaushaltId =
+        mitgliedschaft.household_id;
 
-                    <span>
-                        ${kaufmenge}
-                        ${produkt.einheit}
-                        kaufen
-                    </span>
 
-                    <small>
-                        Bestand:
-                        ${produkt.bestand}
-                    </small>
+    aktuellerHaushalt =
+        mitgliedschaft.households;
 
-                </div>
-            `;
 
-        }).join("");
+    authArea.classList.add("hidden");
+
+    householdArea.classList.add("hidden");
+
+    appArea.classList.remove("hidden");
+
+
+    console.log(
+        "Aktueller Haushalt:",
+        aktuellerHaushalt
+    );
 }
 
-function startScanner() {
-    scannerArea.classList.remove("hidden");
 
-    scanner = new Html5Qrcode("reader");
+/* =========================================================
+   HAUSHALT ERSTELLEN
+========================================================= */
+
+createHouseholdButton.addEventListener(
+    "click",
+    async () => {
+
+        const name =
+            householdName.value.trim();
+
+
+        if (!name) {
+
+            householdInfo.textContent =
+                "Bitte einen Namen für den Haushalt eingeben.";
+
+            return;
+        }
+
+
+        const {
+            data: { user }
+        } =
+            await supabaseClient.auth.getUser();
+
+
+        if (!user) {
+
+            householdInfo.textContent =
+                "Du bist nicht angemeldet.";
+
+            return;
+        }
+
+
+        const inviteCode =
+            einladungscodeErzeugen();
+
+
+        const {
+            data: neuerHaushalt,
+            error: haushaltFehler
+        } =
+            await supabaseClient
+                .from("households")
+                .insert({
+
+                    name:
+                        name,
+
+                    invite_code:
+                        inviteCode,
+
+                    owner_id:
+                        user.id
+                })
+                .select()
+                .single();
+
+
+        if (haushaltFehler) {
+
+            console.error(
+                "Haushalt konnte nicht erstellt werden:",
+                haushaltFehler
+            );
+
+
+            householdInfo.textContent =
+                "Haushalt konnte nicht erstellt werden.";
+
+
+            return;
+        }
+
+
+        const {
+            error: memberFehler
+        } =
+            await supabaseClient
+                .from("household_members")
+                .insert({
+
+                    household_id:
+                        neuerHaushalt.id,
+
+                    user_id:
+                        user.id,
+
+                    role:
+                        "owner"
+                });
+
+
+        if (memberFehler) {
+
+            console.error(
+                "Mitgliedschaft konnte nicht erstellt werden:",
+                memberFehler
+            );
+
+
+            householdInfo.textContent =
+                "Haushalt wurde erstellt, aber die Mitgliedschaft konnte nicht angelegt werden.";
+
+
+            return;
+        }
+
+
+        householdInfo.textContent =
+            "Haushalt erstellt ✓";
+
+
+        householdName.value =
+            "";
+
+
+        await haushaltPruefen();
+    }
+);
+
+
+/* =========================================================
+   HAUSHALT BEITRETEN
+========================================================= */
+
+joinHouseholdButton.addEventListener(
+    "click",
+    async () => {
+
+        const code =
+            inviteCodeInput.value
+                .trim()
+                .toUpperCase();
+
+
+        if (!code) {
+
+            householdInfo.textContent =
+                "Bitte einen Einladungscode eingeben.";
+
+            return;
+        }
+
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .rpc(
+                    "join_household_by_code",
+                    {
+                        p_invite_code:
+                            code
+                    }
+                );
+
+
+        if (error) {
+
+            console.error(
+                "Beitritt fehlgeschlagen:",
+                error
+            );
+
+
+            householdInfo.textContent =
+                "Einladungscode ungültig oder Haushalt nicht gefunden.";
+
+
+            return;
+        }
+
+
+        aktuellerHaushaltId =
+            data;
+
+
+        inviteCodeInput.value =
+            "";
+
+
+        householdInfo.textContent =
+            "Haushalt erfolgreich beigetreten ✓";
+
+
+        await haushaltPruefen();
+    }
+);
+
+
+/* =========================================================
+   LOGOUT AUF HAUSHALTSSEITE
+========================================================= */
+
+householdLogoutButton.addEventListener(
+    "click",
+    async () => {
+
+        await alleBereicheSchliessen();
+
+
+        const {
+            error
+        } =
+            await supabaseClient.auth.signOut();
+
+
+        if (error) {
+
+            console.error(
+                error
+            );
+
+            return;
+        }
+
+
+        aktuellerHaushaltId = null;
+
+        aktuellerHaushalt = null;
+
+
+        householdName.value = "";
+
+        inviteCodeInput.value = "";
+
+
+        householdArea.classList.add("hidden");
+
+        appArea.classList.add("hidden");
+
+        authArea.classList.remove("hidden");
+
+
+        authInfo.textContent =
+            "Du wurdest abgemeldet.";
+    }
+);
+
+
+/* =========================================================
+   HAUPTNAVIGATION
+========================================================= */
+
+scanButton.addEventListener(
+    "click",
+    async () => {
+
+        await alleBereicheSchliessen();
+
+        startScanner();
+    }
+);
+
+
+closeScannerButton.addEventListener(
+    "click",
+    async () => {
+
+        await alleBereicheSchliessen();
+    }
+);
+
+
+shoppingListButton.addEventListener(
+    "click",
+    async () => {
+
+        await alleBereicheSchliessen();
+
+
+        shoppingListArea
+            .classList
+            .remove("hidden");
+
+
+        await einkaufslisteAnzeigen();
+    }
+);
+
+
+closeShoppingList.addEventListener(
+    "click",
+    async () => {
+
+        await alleBereicheSchliessen();
+    }
+);
+
+
+stockButton.addEventListener(
+    "click",
+    async () => {
+
+        await alleBereicheSchliessen();
+
+
+        stockArea
+            .classList
+            .remove("hidden");
+
+
+        await bestandAnzeigen(
+
+            stockSearch
+                ? stockSearch.value
+                : ""
+        );
+    }
+);
+
+
+closeStock.addEventListener(
+    "click",
+    async () => {
+
+        await alleBereicheSchliessen();
+    }
+);
+
+
+manageButton.addEventListener(
+    "click",
+    async () => {
+
+        await alleBereicheSchliessen();
+
+
+        manageArea
+            .classList
+            .remove("hidden");
+
+
+        await artikelverwaltungAnzeigen(
+
+            manageSearch
+                ? manageSearch.value
+                : ""
+        );
+    }
+);
+
+
+closeManage.addEventListener(
+    "click",
+    async () => {
+
+        await alleBereicheSchliessen();
+    }
+);
+
+
+/* =========================================================
+   SUCHFELDER
+========================================================= */
+
+if (stockSearch) {
+
+    stockSearch.addEventListener(
+        "input",
+        () => {
+
+            bestandAnzeigen(
+                stockSearch.value
+            );
+        }
+    );
+}
+
+
+if (manageSearch) {
+
+    manageSearch.addEventListener(
+        "input",
+        () => {
+
+            artikelverwaltungAnzeigen(
+                manageSearch.value
+            );
+        }
+    );
+}
+
+/* =========================================================
+   MANUELLE BARCODE-EINGABE
+========================================================= */
+
+manualSearchButton.addEventListener(
+    "click",
+    async () => {
+
+        const barcode =
+            manualBarcode.value.trim();
+
+
+        if (!barcode) {
+
+            alert(
+                "Bitte einen Barcode eingeben."
+            );
+
+            return;
+        }
+
+
+        if (!/^\d+$/.test(barcode)) {
+
+            alert(
+                "Der Barcode darf nur Zahlen enthalten."
+            );
+
+            return;
+        }
+
+
+        scanResult.innerHTML = `
+            <strong>
+                Barcode eingegeben
+            </strong>
+
+            <br><br>
+
+            ${escapeHtml(barcode)}
+
+            <br><br>
+
+            Produkt wird gesucht...
+        `;
+
+
+        letzterBarcode =
+            barcode;
+
+
+        await produktSuchen(
+            barcode
+        );
+    }
+);
+
+
+/* =========================================================
+   SCANNER
+========================================================= */
+
+function startScanner() {
+
+    scannerArea
+        .classList
+        .remove("hidden");
+
+
+    if (scanner) {
+
+        return;
+    }
+
+
+    scanner =
+        new Html5Qrcode(
+            "reader"
+        );
+
 
     const config = {
+
         fps: 10,
+
         qrbox: {
             width: 280,
             height: 140
         },
+
         formatsToSupport: [
+
             Html5QrcodeSupportedFormats.EAN_13,
+
             Html5QrcodeSupportedFormats.EAN_8,
+
             Html5QrcodeSupportedFormats.UPC_A,
+
             Html5QrcodeSupportedFormats.UPC_E,
+
             Html5QrcodeSupportedFormats.CODE_128
         ]
     };
 
+
     scanner.start(
-        { facingMode: "environment" },
+
+        {
+            facingMode:
+                "environment"
+        },
+
         config,
+
         barcodeErkannt,
+
         scanFehler
-    ).catch(error => {
-        console.error(error);
-        scanResult.innerHTML = "Kamera konnte nicht gestartet werden.";
-    });
+
+    ).catch(
+        error => {
+
+            console.error(
+                error
+            );
+
+
+            scanner =
+                null;
+
+
+            scanResult.innerHTML =
+                "Kamera konnte nicht gestartet werden.";
+        }
+    );
 }
 
-async function barcodeErkannt(barcode) {
-    if (barcode === letzterBarcode) {
+
+async function barcodeErkannt(
+    barcode
+) {
+
+    if (
+        barcode ===
+        letzterBarcode
+    ) {
+
         return;
     }
 
-    letzterBarcode = barcode;
+
+    letzterBarcode =
+        barcode;
+
 
     scanResult.innerHTML = `
-        <strong>Barcode erkannt</strong>
+        <strong>
+            Barcode erkannt
+        </strong>
+
         <br><br>
-        ${barcode}
+
+        ${escapeHtml(barcode)}
+
         <br><br>
+
         Produkt wird gesucht...
     `;
 
-    await produktSuchen(barcode);
+
+    await produktSuchen(
+        barcode
+    );
 }
 
-function scanFehler(error) {
-    // Scanner sucht einfach weiter
+
+function scanFehler(
+    error
+) {
 }
 
-async function produktSuchen(barcode) {
 
-    // 1. Erst in unserer Supabase-Datenbank suchen
-    const { data: gespeicherteArtikel, error: suchFehler } =
+/* =========================================================
+   PRODUKT SUCHEN
+========================================================= */
+
+async function produktSuchen(
+    barcode
+) {
+
+    if (!aktuellerHaushaltId) {
+
+        scanResult.innerHTML = `
+            <strong>
+                Kein Haushalt ausgewählt.
+            </strong>
+        `;
+
+        return;
+    }
+
+
+    const {
+        data: gespeicherteArtikel,
+        error: suchFehler
+    } =
         await supabaseClient
             .from("artikel")
             .select("*")
-            .eq("barcode", barcode)
+            .eq(
+                "barcode",
+                barcode
+            )
+            .eq(
+                "household_id",
+                aktuellerHaushaltId
+            )
             .limit(1);
 
+
     if (suchFehler) {
-        console.error("Fehler beim Suchen in Supabase:", suchFehler);
+
+        console.error(
+            "Fehler beim Suchen in Supabase:",
+            suchFehler
+        );
+
+
+        scanResult.innerHTML = `
+            <strong>
+                Fehler bei der Datenbanksuche
+            </strong>
+
+            <br><br>
+
+            Bitte später erneut versuchen.
+        `;
+
+
+        return;
     }
+
 
     if (
         gespeicherteArtikel &&
         gespeicherteArtikel.length > 0
     ) {
+
         gespeichertenArtikelAnzeigen(
             gespeicherteArtikel[0]
         );
+
+
         return;
     }
 
-    // 2. Wenn nicht vorhanden:
-    // Open Food Facts fragen
+
     try {
 
         const url =
             `https://world.openfoodfacts.org/api/v2/product/${barcode}.json` +
-            `?fields=product_name,brands,image_front_url`;
+            `?fields=product_name,product_name_de,brands,image_front_url`;
 
-        const response = await fetch(url);
-        const daten = await response.json();
 
-        if (daten.status === 1 && daten.product) {
+        const response =
+            await fetch(
+                url
+            );
 
-            const produkt = daten.product;
+
+        if (!response.ok) {
+
+            throw new Error(
+                `Open Food Facts HTTP ${response.status}`
+            );
+        }
+
+
+        const daten =
+            await response.json();
+
+
+        if (
+            daten.status === 1 &&
+            daten.product
+        ) {
+
+            const produkt =
+                daten.product;
+
 
             const name =
-                produkt.product_name || "Unbekannter Artikel";
+                produkt.product_name_de ||
+                produkt.product_name ||
+                "";
+
 
             const marke =
-                produkt.brands || "";
+                produkt.brands ||
+                "";
+
 
             artikelFormularAnzeigen(
                 barcode,
@@ -735,86 +1345,141 @@ async function produktSuchen(barcode) {
                 "",
                 false
             );
-
         }
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            error
+        );
 
-        scanResult.innerHTML = `
-            Produktdaten konnten nicht geladen werden.
-            <br><br>
-            Barcode: ${barcode}
-        `;
 
+        artikelFormularAnzeigen(
+            barcode,
+            "",
+            "",
+            false
+        );
     }
 }
 
-function artikelFormularAnzeigen(barcode, name, marke, gefunden) {
+
+/* =========================================================
+   ARTIKELFORMULAR
+========================================================= */
+
+function artikelFormularAnzeigen(
+    barcode,
+    name,
+    marke,
+    gefunden
+) {
+
     scanResult.innerHTML = `
         <div class="artikel-formular">
 
             <h3>
-                ${gefunden ? "Produkt gefunden" : "Neuer Artikel"}
+                ${
+                    gefunden
+                        ? "Produkt gefunden"
+                        : "Neuer Artikel"
+                }
             </h3>
 
-            <label>Barcode</label>
+            <label>
+                Barcode
+            </label>
+
             <input
                 type="text"
-                value="${barcode}"
+                value="${escapeHtml(barcode)}"
                 readonly
             >
 
-            <label>Produktname</label>
+
+            <label>
+                Produktname
+            </label>
+
             <input
                 type="text"
                 id="produktName"
-                value="${name}"
+                value="${escapeHtml(name)}"
                 placeholder="Produktname eingeben"
             >
 
-            <label>Marke</label>
+
+            <label>
+                Marke
+            </label>
+
             <input
                 type="text"
                 id="produktMarke"
-                value="${marke}"
+                value="${escapeHtml(marke)}"
                 placeholder="Marke"
             >
 
-            <label>Kategorie</label>
-            <select id="produktKategorie">
-                <option value="Kühlschrank">
-                    Kühlschrank
+
+            <label>
+                Kategorie
+            </label>
+
+            <input
+                type="text"
+                id="produktKategorie"
+                placeholder="Kategorie eingeben"
+                autocomplete="off"
+            >
+
+
+            <label>
+                Einheit
+            </label>
+
+            <select
+                id="produktEinheit"
+            >
+
+                <option value="Stück">
+                    Stück
                 </option>
 
-                <option value="Vorrat">
-                    Vorratsschrank
+                <option value="Packung">
+                    Packung
                 </option>
 
-                <option value="Getränke">
-                    Getränke
+                <option value="Flasche">
+                    Flasche
                 </option>
 
-                <option value="Gefrierschrank">
-                    Gefrierschrank
+                <option value="Glas">
+                    Glas
                 </option>
 
-                <option value="Sonstiges">
-                    Sonstiges
+                <option value="Dose">
+                    Dose
                 </option>
+
             </select>
 
-            <label>Einheit</label>
-            <select id="produktEinheit">
-                <option value="Stück">Stück</option>
-                <option value="Packung">Packung</option>
-                <option value="Flasche">Flasche</option>
-                <option value="Glas">Glas</option>
-                <option value="Dose">Dose</option>
-            </select>
 
-            <label>Mindestbestand</label>
+            <label>
+                Wie viel davon hast du?
+            </label>
+
+            <input
+                type="number"
+                id="produktBestand"
+                value="1"
+                min="0"
+            >
+
+
+            <label>
+                Mindestbestand
+            </label>
+
             <input
                 type="number"
                 id="mindestbestand"
@@ -822,7 +1487,11 @@ function artikelFormularAnzeigen(barcode, name, marke, gefunden) {
                 min="0"
             >
 
-            <label>Sollbestand</label>
+
+            <label>
+                Sollbestand
+            </label>
+
             <input
                 type="number"
                 id="sollbestand"
@@ -830,61 +1499,158 @@ function artikelFormularAnzeigen(barcode, name, marke, gefunden) {
                 min="0"
             >
 
-            <button id="artikelSpeichern">
+
+            <button
+                id="artikelSpeichern"
+            >
                 Artikel speichern
             </button>
 
         </div>
     `;
 
+
     document
-        .getElementById("artikelSpeichern")
-        .addEventListener("click", () => {
-            artikelSpeichern(barcode);
-        });
+        .getElementById(
+            "artikelSpeichern"
+        )
+        .addEventListener(
+            "click",
+            () => {
+
+                artikelSpeichern(
+                    barcode
+                );
+            }
+        );
 }
 
-async function artikelSpeichern(barcode) {
+
+/* =========================================================
+   ARTIKEL SPEICHERN
+========================================================= */
+
+async function artikelSpeichern(
+    barcode
+) {
+
+    if (!aktuellerHaushaltId) {
+
+        alert(
+            "Kein Haushalt ausgewählt."
+        );
+
+
+        return;
+    }
+
 
     const artikel = {
 
-        barcode: barcode,
+        household_id:
+            aktuellerHaushaltId,
+
+        barcode:
+            barcode,
 
         name:
-            document.getElementById("produktName").value.trim(),
+            document
+                .getElementById(
+                    "produktName"
+                )
+                .value
+                .trim(),
 
         marke:
-            document.getElementById("produktMarke").value.trim(),
+            document
+                .getElementById(
+                    "produktMarke"
+                )
+                .value
+                .trim(),
 
         kategorie:
-            document.getElementById("produktKategorie").value,
+            document
+                .getElementById(
+                    "produktKategorie"
+                )
+                .value
+                .trim() ||
+            "Sonstiges",
 
         einheit:
-            document.getElementById("produktEinheit").value,
+            document
+                .getElementById(
+                    "produktEinheit"
+                )
+                .value,
+
+        bestand:
+            Number(
+                document
+                    .getElementById(
+                        "produktBestand"
+                    )
+                    .value
+            ),
 
         mindestbestand:
             Number(
-                document.getElementById("mindestbestand").value
+                document
+                    .getElementById(
+                        "mindestbestand"
+                    )
+                    .value
             ),
 
         sollbestand:
             Number(
-                document.getElementById("sollbestand").value
-            ),
-
-        bestand: 0
+                document
+                    .getElementById(
+                        "sollbestand"
+                    )
+                    .value
+            )
     };
 
+
     if (!artikel.name) {
-        alert("Bitte einen Produktnamen eingeben.");
+
+        alert(
+            "Bitte einen Produktnamen eingeben."
+        );
+
+
         return;
     }
 
-    const { data, error } =
+
+    if (
+        artikel.bestand < 0 ||
+        artikel.mindestbestand < 0 ||
+        artikel.sollbestand < 0
+    ) {
+
+        alert(
+            "Bestände dürfen nicht kleiner als 0 sein."
+        );
+
+
+        return;
+    }
+
+
+    const {
+        data,
+        error
+    } =
         await supabaseClient
             .from("artikel")
-            .insert([artikel])
+            .insert([
+                artikel
+            ])
             .select();
+
 
     if (error) {
 
@@ -893,237 +1659,1609 @@ async function artikelSpeichern(barcode) {
             error
         );
 
+
         scanResult.innerHTML = `
-            <strong>Fehler beim Speichern</strong>
+            <strong>
+                Fehler beim Speichern
+            </strong>
+
             <br><br>
-            ${error.message}
+
+            ${escapeHtml(error.message)}
         `;
+
 
         return;
     }
+
 
     console.log(
         "Artikel in Supabase gespeichert:",
         data
     );
 
+
     scanResult.innerHTML = `
-        <strong>Artikel gespeichert ✓</strong>
+        <strong>
+            Artikel gespeichert ✓
+        </strong>
 
         <br><br>
 
-        ${artikel.name}
+        ${escapeHtml(artikel.name)}
+
+        <br><br>
+
+        Bestand:
+        ${artikel.bestand}
+        ${escapeHtml(artikel.einheit)}
 
         <br><br>
 
         Barcode:
+
         <br>
-        ${artikel.barcode}
+
+        ${escapeHtml(artikel.barcode)}
     `;
 }
 
-function gespeichertenArtikelAnzeigen(artikel) {
+
+/* =========================================================
+   GESPEICHERTEN ARTIKEL ANZEIGEN
+========================================================= */
+
+function gespeichertenArtikelAnzeigen(
+    artikel
+) {
 
     scanResult.innerHTML = `
         <div class="artikel-formular">
 
-            <h3>${artikel.name}</h3>
+            <h3>
+                ${escapeHtml(artikel.name)}
+            </h3>
+
 
             <p>
-                <strong>Marke:</strong>
-                ${artikel.marke || "-"}
+                <strong>
+                    Marke:
+                </strong>
+
+                ${escapeHtml(
+                    artikel.marke ||
+                    "-"
+                )}
             </p>
 
+
             <p>
-                <strong>Bestand:</strong>
-                <span id="aktuellerBestand">
+                <strong>
+                    Kategorie:
+                </strong>
+
+                ${escapeHtml(
+                    artikel.kategorie ||
+                    "Sonstiges"
+                )}
+            </p>
+
+
+            <p>
+                <strong>
+                    Bestand:
+                </strong>
+
+                <span
+                    id="aktuellerBestand"
+                >
                     ${artikel.bestand}
                 </span>
-                ${artikel.einheit}
+
+                ${escapeHtml(
+                    artikel.einheit
+                )}
             </p>
 
+
             <p>
-                <strong>Mindestbestand:</strong>
+                <strong>
+                    Mindestbestand:
+                </strong>
+
                 ${artikel.mindestbestand}
             </p>
 
+
             <p>
-                <strong>Sollbestand:</strong>
+                <strong>
+                    Sollbestand:
+                </strong>
+
                 ${artikel.sollbestand}
             </p>
 
+
             <div class="mengenwahl">
 
-                <button id="mengeMinus">
+                <button
+                    id="mengeMinus"
+                >
                     −
                 </button>
 
-                <span id="mengeAnzeige">
+
+                <span
+                    id="mengeAnzeige"
+                >
                     1
                 </span>
 
-                <button id="mengePlus">
+
+                <button
+                    id="mengePlus"
+                >
                     +
                 </button>
 
             </div>
 
-            <button id="artikelEntnehmen">
+
+            <button
+                id="artikelEntnehmen"
+            >
                 Entnehmen
             </button>
 
-            <button id="artikelEinlagern">
+
+            <button
+                id="artikelEinlagern"
+            >
                 Einlagern
             </button>
 
         </div>
     `;
 
-    let menge = 1;
+
+    let menge =
+        1;
+
 
     const mengeAnzeige =
-        document.getElementById("mengeAnzeige");
+        document.getElementById(
+            "mengeAnzeige"
+        );
+
 
     document
-        .getElementById("mengeMinus")
-        .addEventListener("click", () => {
+        .getElementById(
+            "mengeMinus"
+        )
+        .addEventListener(
+            "click",
+            () => {
 
-            if (menge > 1) {
-                menge--;
-                mengeAnzeige.textContent = menge;
+                if (
+                    menge > 1
+                ) {
+
+                    menge--;
+
+                    mengeAnzeige.textContent =
+                        menge;
+                }
             }
+        );
 
-        });
-
-    document
-        .getElementById("mengePlus")
-        .addEventListener("click", () => {
-
-            menge++;
-            mengeAnzeige.textContent = menge;
-
-        });
 
     document
-        .getElementById("artikelEntnehmen")
-        .addEventListener("click", () => {
+        .getElementById(
+            "mengePlus"
+        )
+        .addEventListener(
+            "click",
+            () => {
 
-            bestandAendern(
-                artikel.barcode,
-                -menge
-            );
+                menge++;
 
-        });
+                mengeAnzeige.textContent =
+                    menge;
+            }
+        );
+
 
     document
-        .getElementById("artikelEinlagern")
-        .addEventListener("click", () => {
+        .getElementById(
+            "artikelEntnehmen"
+        )
+        .addEventListener(
+            "click",
+            async () => {
 
-            bestandAendern(
-                artikel.barcode,
-                menge
-            );
+                await bestandAendern(
+                    artikel.barcode,
+                    -menge
+                );
+            }
+        );
 
-        });
+
+    document
+        .getElementById(
+            "artikelEinlagern"
+        )
+        .addEventListener(
+            "click",
+            async () => {
+
+                await bestandAendern(
+                    artikel.barcode,
+                    menge
+                );
+            }
+        );
 }
 
-async function bestandAendern(barcode, aenderung) {
 
-    const { data: treffer, error: suchFehler } =
+/* =========================================================
+   BESTAND ÄNDERN
+========================================================= */
+
+async function bestandAendern(
+    barcode,
+    aenderung
+) {
+
+    const {
+        data: treffer,
+        error: suchFehler
+    } =
         await supabaseClient
             .from("artikel")
             .select("*")
-            .eq("barcode", barcode)
+            .eq(
+                "barcode",
+                barcode
+            )
+            .eq(
+                "household_id",
+                aktuellerHaushaltId
+            )
             .limit(1);
 
+
     if (suchFehler) {
-        console.error("Fehler beim Laden:", suchFehler);
+
+        console.error(
+            "Fehler beim Laden:",
+            suchFehler
+        );
+
+
         return;
     }
 
-    if (!treffer || treffer.length === 0) {
-        alert("Artikel wurde nicht gefunden.");
+
+    if (
+        !treffer ||
+        treffer.length === 0
+    ) {
+
+        alert(
+            "Artikel wurde nicht gefunden."
+        );
+
+
         return;
     }
 
-    const artikel = treffer[0];
+
+    const artikel =
+        treffer[0];
+
 
     let neuerBestand =
-        artikel.bestand + aenderung;
+        Number(
+            artikel.bestand
+        ) +
+        Number(
+            aenderung
+        );
 
-    if (neuerBestand < 0) {
-        neuerBestand = 0;
+
+    if (
+        neuerBestand < 0
+    ) {
+
+        neuerBestand =
+            0;
     }
 
-    const { error: updateFehler } =
+
+    const {
+        error: updateFehler
+    } =
         await supabaseClient
             .from("artikel")
             .update({
-                bestand: neuerBestand
+
+                bestand:
+                    neuerBestand
             })
-            .eq("barcode", barcode);
+            .eq(
+                "barcode",
+                barcode
+            )
+            .eq(
+                "household_id",
+                aktuellerHaushaltId
+            );
+
 
     if (updateFehler) {
-        console.error("Fehler beim Aktualisieren:", updateFehler);
+
+        console.error(
+            "Fehler beim Aktualisieren:",
+            updateFehler
+        );
+
+
         return;
     }
 
-    artikel.bestand = neuerBestand;
 
-    document
-        .getElementById("aktuellerBestand")
-        .textContent = neuerBestand;
+    const bestandElement =
+        document.getElementById(
+            "aktuellerBestand"
+        );
+
+
+    if (
+        bestandElement
+    ) {
+
+        bestandElement.textContent =
+            neuerBestand;
+    }
+
 
     zeigeSpeicherMeldung();
 }
 
+
+/* =========================================================
+   SPEICHERMELDUNG
+========================================================= */
+
 function zeigeSpeicherMeldung() {
 
-    let meldung = document.getElementById("speicherMeldung");
+    let meldung =
+        document.getElementById(
+            "speicherMeldung"
+        );
+
 
     if (!meldung) {
-        meldung = document.createElement("div");
-        meldung.id = "speicherMeldung";
-        document
-            .querySelector(".artikel-formular")
-            .appendChild(meldung);
-    }
 
-    meldung.textContent = "Bestand aktualisiert ✓";
-    meldung.classList.add("sichtbar");
+        meldung =
+            document.createElement(
+                "div"
+            );
 
-    setTimeout(() => {
-        meldung.classList.remove("sichtbar");
-    }, 1800);
-}
 
-async function stopScanner() {
-    if (scanner) {
-        try {
-            await scanner.stop();
-            scanner.clear();
-        } catch (error) {
-            console.error(error);
+        meldung.id =
+            "speicherMeldung";
+
+
+        const formular =
+            document.querySelector(
+                ".artikel-formular"
+            );
+
+
+        if (!formular) {
+
+            return;
         }
+
+
+        formular.appendChild(
+            meldung
+        );
     }
 
-    scanner = null;
-    letzterBarcode = null;
 
-    scannerArea.classList.add("hidden");
+    meldung.textContent =
+        "Bestand aktualisiert ✓";
+
+
+    meldung.classList.add(
+        "sichtbar"
+    );
+
+
+    setTimeout(
+        () => {
+
+            meldung
+                .classList
+                .remove(
+                    "sichtbar"
+                );
+
+        },
+        1800
+    );
 }
-async function supabaseTest() {
 
-    const { data, error } = await supabaseClient
-        .from("artikel")
-        .select("*");
+/* =========================================================
+   EINKAUFSLISTE
+========================================================= */
 
-    if (error) {
-        console.error("Supabase Fehler:", error);
+async function einkaufslisteAnzeigen() {
+
+    if (!aktuellerHaushaltId) {
+
+        shoppingListContent.innerHTML = `
+            <p>
+                Kein Haushalt ausgewählt.
+            </p>
+        `;
+
         return;
     }
 
-    console.log("Supabase Verbindung funktioniert:", data);
+
+    const {
+        data: artikel,
+        error
+    } =
+        await supabaseClient
+            .from("artikel")
+            .select("*")
+            .eq(
+                "household_id",
+                aktuellerHaushaltId
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Fehler beim Laden der Einkaufsliste:",
+            error
+        );
+
+
+        shoppingListContent.innerHTML = `
+            <p>
+                Einkaufsliste konnte nicht geladen werden.
+            </p>
+        `;
+
+
+        return;
+    }
+
+
+    const einkaufsliste =
+        (artikel || [])
+            .filter(
+                produkt =>
+                    Number(
+                        produkt.bestand
+                    ) <=
+                    Number(
+                        produkt.mindestbestand
+                    )
+            )
+            .sort(
+                (a, b) =>
+                    a.name.localeCompare(
+                        b.name,
+                        "de"
+                    )
+            );
+
+
+    if (
+        einkaufsliste.length === 0
+    ) {
+
+        shoppingListContent.innerHTML = `
+            <p>
+                Aktuell muss nichts nachgekauft werden. ✓
+            </p>
+        `;
+
+
+        return;
+    }
+
+
+    shoppingListContent.innerHTML =
+        einkaufsliste
+            .map(
+                produkt => {
+
+                    const kaufmenge =
+                        Math.max(
+                            Number(
+                                produkt.sollbestand
+                            ) -
+                            Number(
+                                produkt.bestand
+                            ),
+                            0
+                        );
+
+
+                    return `
+                        <div class="shopping-item">
+
+                            <strong>
+                                ${escapeHtml(
+                                    produkt.name
+                                )}
+                            </strong>
+
+                            <span>
+                                ${kaufmenge}
+                                ${escapeHtml(
+                                    produkt.einheit
+                                )}
+                                kaufen
+                            </span>
+
+                            <small>
+                                Bestand:
+                                ${produkt.bestand}
+                            </small>
+
+                        </div>
+                    `;
+                }
+            )
+            .join("");
 }
 
-supabaseTest();
+
+/* =========================================================
+   BESTANDSÜBERSICHT + SUCHE
+========================================================= */
+
+async function bestandAnzeigen(
+    suchtext = ""
+) {
+
+    if (!aktuellerHaushaltId) {
+
+        stockContent.innerHTML = `
+            <p>
+                Kein Haushalt ausgewählt.
+            </p>
+        `;
+
+        return;
+    }
+
+
+    const {
+        data: artikel,
+        error
+    } =
+        await supabaseClient
+            .from("artikel")
+            .select("*")
+            .eq(
+                "household_id",
+                aktuellerHaushaltId
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Fehler beim Laden des Bestands:",
+            error
+        );
+
+
+        stockContent.innerHTML = `
+            <p>
+                Bestand konnte nicht geladen werden.
+            </p>
+        `;
+
+
+        return;
+    }
+
+
+    if (
+        !artikel ||
+        artikel.length === 0
+    ) {
+
+        stockContent.innerHTML = `
+            <p>
+                Noch keine Artikel gespeichert.
+            </p>
+        `;
+
+
+        return;
+    }
+
+
+    const filterText =
+        suchtext
+            .trim()
+            .toLowerCase();
+
+
+    const gefilterteArtikel =
+        artikel.filter(
+            produkt => {
+
+                const name =
+                    (
+                        produkt.name ||
+                        ""
+                    ).toLowerCase();
+
+                const marke =
+                    (
+                        produkt.marke ||
+                        ""
+                    ).toLowerCase();
+
+                const kategorie =
+                    (
+                        produkt.kategorie ||
+                        ""
+                    ).toLowerCase();
+
+                const barcode =
+                    (
+                        produkt.barcode ||
+                        ""
+                    ).toLowerCase();
+
+
+                return (
+                    name.includes(
+                        filterText
+                    ) ||
+                    marke.includes(
+                        filterText
+                    ) ||
+                    kategorie.includes(
+                        filterText
+                    ) ||
+                    barcode.includes(
+                        filterText
+                    )
+                );
+            }
+        );
+
+
+    if (
+        gefilterteArtikel.length === 0
+    ) {
+
+        stockContent.innerHTML = `
+            <p>
+                Kein passender Artikel gefunden.
+            </p>
+        `;
+
+
+        return;
+    }
+
+
+    const kategorien =
+        {};
+
+
+    gefilterteArtikel
+        .forEach(
+            produkt => {
+
+                const kategorie =
+                    (
+                        produkt.kategorie ||
+                        ""
+                    ).trim() ||
+                    "Sonstiges";
+
+
+                if (
+                    !kategorien[
+                        kategorie
+                    ]
+                ) {
+
+                    kategorien[
+                        kategorie
+                    ] = [];
+                }
+
+
+                kategorien[
+                    kategorie
+                ].push(
+                    produkt
+                );
+            }
+        );
+
+
+    let html =
+        "";
+
+
+    Object
+        .keys(
+            kategorien
+        )
+        .sort(
+            (a, b) =>
+                a.localeCompare(
+                    b,
+                    "de"
+                )
+        )
+        .forEach(
+            kategorie => {
+
+                html += `
+                    <div class="stock-category">
+
+                        <h3>
+                            ${escapeHtml(
+                                kategorie
+                            )}
+                        </h3>
+                `;
+
+
+                kategorien[
+                    kategorie
+                ]
+                    .sort(
+                        (a, b) =>
+                            a.name.localeCompare(
+                                b.name,
+                                "de"
+                            )
+                    )
+                    .forEach(
+                        produkt => {
+
+                            html += `
+                                <div class="stock-item">
+
+                                    <strong>
+                                        ${escapeHtml(
+                                            produkt.name
+                                        )}
+                                    </strong>
+
+                                    <span>
+                                        ${produkt.bestand}
+                                        ${escapeHtml(
+                                            produkt.einheit
+                                        )}
+                                    </span>
+
+                                </div>
+                            `;
+                        }
+                    );
+
+
+                html += `
+                    </div>
+                `;
+            }
+        );
+
+
+    stockContent.innerHTML =
+        html;
+}
+
+
+/* =========================================================
+   ARTIKELVERWALTUNG + SUCHE
+========================================================= */
+
+async function artikelverwaltungAnzeigen(
+    suchtext = ""
+) {
+
+    if (!aktuellerHaushaltId) {
+
+        manageContent.innerHTML = `
+            <p>
+                Kein Haushalt ausgewählt.
+            </p>
+        `;
+
+        return;
+    }
+
+
+    const {
+        data: artikel,
+        error
+    } =
+        await supabaseClient
+            .from("artikel")
+            .select("*")
+            .eq(
+                "household_id",
+                aktuellerHaushaltId
+            )
+            .order(
+                "name",
+                {
+                    ascending:
+                        true
+                }
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Fehler beim Laden der Artikelverwaltung:",
+            error
+        );
+
+
+        manageContent.innerHTML = `
+            <p>
+                Artikel konnten nicht geladen werden.
+            </p>
+        `;
+
+
+        return;
+    }
+
+
+    if (
+        !artikel ||
+        artikel.length === 0
+    ) {
+
+        manageContent.innerHTML = `
+            <p>
+                Noch keine Artikel gespeichert.
+            </p>
+        `;
+
+
+        return;
+    }
+
+
+    const filterText =
+        suchtext
+            .trim()
+            .toLowerCase();
+
+
+    const gefilterteArtikel =
+        artikel.filter(
+            produkt => {
+
+                const name =
+                    (
+                        produkt.name ||
+                        ""
+                    ).toLowerCase();
+
+                const marke =
+                    (
+                        produkt.marke ||
+                        ""
+                    ).toLowerCase();
+
+                const barcode =
+                    (
+                        produkt.barcode ||
+                        ""
+                    ).toLowerCase();
+
+                const kategorie =
+                    (
+                        produkt.kategorie ||
+                        ""
+                    ).toLowerCase();
+
+
+                return (
+                    name.includes(
+                        filterText
+                    ) ||
+                    marke.includes(
+                        filterText
+                    ) ||
+                    barcode.includes(
+                        filterText
+                    ) ||
+                    kategorie.includes(
+                        filterText
+                    )
+                );
+            }
+        );
+
+
+    if (
+        gefilterteArtikel.length === 0
+    ) {
+
+        manageContent.innerHTML = `
+            <p>
+                Kein passender Artikel gefunden.
+            </p>
+        `;
+
+
+        return;
+    }
+
+
+    manageContent.innerHTML =
+        gefilterteArtikel
+            .map(
+                produkt => {
+
+                    return `
+                        <div class="manage-item">
+
+                            <div>
+
+                                <strong>
+                                    ${escapeHtml(
+                                        produkt.name
+                                    )}
+                                </strong>
+
+                                <small>
+
+                                    ${escapeHtml(
+                                        produkt.kategorie ||
+                                        "Sonstiges"
+                                    )}
+
+                                    <br>
+
+                                    Barcode:
+                                    ${escapeHtml(
+                                        produkt.barcode
+                                    )}
+
+                                </small>
+
+                            </div>
+
+                            <button
+                                class="editButton"
+                                data-barcode="${escapeHtml(
+                                    produkt.barcode
+                                )}"
+                            >
+                                Bearbeiten
+                            </button>
+
+                        </div>
+                    `;
+                }
+            )
+            .join("");
+
+
+    document
+        .querySelectorAll(
+            ".editButton"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        artikelBearbeiten(
+                            button.dataset.barcode
+                        );
+                    }
+                );
+            }
+        );
+}
+
+
+/* =========================================================
+   ARTIKEL BEARBEITEN
+========================================================= */
+
+async function artikelBearbeiten(
+    barcode
+) {
+
+    const {
+        data: treffer,
+        error
+    } =
+        await supabaseClient
+            .from("artikel")
+            .select("*")
+            .eq(
+                "barcode",
+                barcode
+            )
+            .eq(
+                "household_id",
+                aktuellerHaushaltId
+            )
+            .limit(1);
+
+
+    if (error) {
+
+        console.error(
+            "Fehler beim Laden des Artikels:",
+            error
+        );
+
+
+        alert(
+            "Artikel konnte nicht geladen werden."
+        );
+
+
+        return;
+    }
+
+
+    if (
+        !treffer ||
+        treffer.length === 0
+    ) {
+
+        alert(
+            "Artikel wurde nicht gefunden."
+        );
+
+
+        return;
+    }
+
+
+    const produkt =
+        treffer[0];
+
+
+    manageContent.innerHTML = `
+        <div class="artikel-formular">
+
+            <h3>
+                Artikel bearbeiten
+            </h3>
+
+
+            <label>
+                Produktname
+            </label>
+
+            <input
+                id="editName"
+                type="text"
+                value="${escapeHtml(
+                    produkt.name
+                )}"
+            >
+
+
+            <label>
+                Marke
+            </label>
+
+            <input
+                id="editMarke"
+                type="text"
+                value="${escapeHtml(
+                    produkt.marke ||
+                    ""
+                )}"
+            >
+
+
+            <label>
+                Kategorie
+            </label>
+
+            <input
+                type="text"
+                id="editKategorie"
+                value="${escapeHtml(
+                    produkt.kategorie ||
+                    ""
+                )}"
+                placeholder="Kategorie eingeben"
+                autocomplete="off"
+            >
+
+
+            <label>
+                Einheit
+            </label>
+
+            <select
+                id="editEinheit"
+            >
+
+                <option value="Stück">
+                    Stück
+                </option>
+
+                <option value="Packung">
+                    Packung
+                </option>
+
+                <option value="Flasche">
+                    Flasche
+                </option>
+
+                <option value="Glas">
+                    Glas
+                </option>
+
+                <option value="Dose">
+                    Dose
+                </option>
+
+            </select>
+
+
+            <label>
+                Aktueller Bestand
+            </label>
+
+            <input
+                id="editBestand"
+                type="number"
+                min="0"
+                value="${produkt.bestand}"
+            >
+
+
+            <label>
+                Mindestbestand
+            </label>
+
+            <input
+                id="editMindestbestand"
+                type="number"
+                min="0"
+                value="${produkt.mindestbestand}"
+            >
+
+
+            <label>
+                Sollbestand
+            </label>
+
+            <input
+                id="editSollbestand"
+                type="number"
+                min="0"
+                value="${produkt.sollbestand}"
+            >
+
+
+            <button
+                id="saveEditButton"
+            >
+                Änderungen speichern
+            </button>
+
+
+            <button
+                id="deleteArticleButton"
+            >
+                Artikel löschen
+            </button>
+
+
+            <button
+                id="cancelEditButton"
+            >
+                Zurück
+            </button>
+
+        </div>
+    `;
+
+
+    const editEinheit =
+        document.getElementById(
+            "editEinheit"
+        );
+
+
+    const bekannteEinheiten = [
+        "Stück",
+        "Packung",
+        "Flasche",
+        "Glas",
+        "Dose"
+    ];
+
+
+    if (
+        produkt.einheit &&
+        !bekannteEinheiten.includes(
+            produkt.einheit
+        )
+    ) {
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
+
+        option.value =
+            produkt.einheit;
+
+
+        option.textContent =
+            produkt.einheit;
+
+
+        editEinheit.appendChild(
+            option
+        );
+    }
+
+
+    editEinheit.value =
+        produkt.einheit ||
+        "Stück";
+
+
+    document
+        .getElementById(
+            "saveEditButton"
+        )
+        .addEventListener(
+            "click",
+            () => {
+
+                artikelAenderungenSpeichern(
+                    barcode
+                );
+            }
+        );
+
+
+    document
+        .getElementById(
+            "deleteArticleButton"
+        )
+        .addEventListener(
+            "click",
+            () => {
+
+                artikelLoeschen(
+                    barcode
+                );
+            }
+        );
+
+
+    document
+        .getElementById(
+            "cancelEditButton"
+        )
+        .addEventListener(
+            "click",
+            () => {
+
+                artikelverwaltungAnzeigen(
+                    manageSearch
+                        ? manageSearch.value
+                        : ""
+                );
+            }
+        );
+}
+
+
+/* =========================================================
+   ÄNDERUNGEN SPEICHERN
+========================================================= */
+
+async function artikelAenderungenSpeichern(
+    barcode
+) {
+
+    const aenderungen = {
+
+        name:
+            document
+                .getElementById(
+                    "editName"
+                )
+                .value
+                .trim(),
+
+        marke:
+            document
+                .getElementById(
+                    "editMarke"
+                )
+                .value
+                .trim(),
+
+        kategorie:
+            document
+                .getElementById(
+                    "editKategorie"
+                )
+                .value
+                .trim() ||
+            "Sonstiges",
+
+        einheit:
+            document
+                .getElementById(
+                    "editEinheit"
+                )
+                .value,
+
+        bestand:
+            Number(
+                document
+                    .getElementById(
+                        "editBestand"
+                    )
+                    .value
+            ),
+
+        mindestbestand:
+            Number(
+                document
+                    .getElementById(
+                        "editMindestbestand"
+                    )
+                    .value
+            ),
+
+        sollbestand:
+            Number(
+                document
+                    .getElementById(
+                        "editSollbestand"
+                    )
+                    .value
+            )
+    };
+
+
+    if (
+        !aenderungen.name
+    ) {
+
+        alert(
+            "Bitte einen Produktnamen eingeben."
+        );
+
+
+        return;
+    }
+
+
+    if (
+        aenderungen.bestand < 0 ||
+        aenderungen.mindestbestand < 0 ||
+        aenderungen.sollbestand < 0
+    ) {
+
+        alert(
+            "Bestände dürfen nicht kleiner als 0 sein."
+        );
+
+
+        return;
+    }
+
+
+    const {
+        error
+    } =
+        await supabaseClient
+            .from("artikel")
+            .update(
+                aenderungen
+            )
+            .eq(
+                "barcode",
+                barcode
+            )
+            .eq(
+                "household_id",
+                aktuellerHaushaltId
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Fehler beim Speichern:",
+            error
+        );
+
+
+        alert(
+            "Änderungen konnten nicht gespeichert werden."
+        );
+
+
+        return;
+    }
+
+
+    await artikelverwaltungAnzeigen(
+        manageSearch
+            ? manageSearch.value
+            : ""
+    );
+}
+
+
+/* =========================================================
+   ARTIKEL LÖSCHEN
+========================================================= */
+
+async function artikelLoeschen(
+    barcode
+) {
+
+    const bestaetigt =
+        confirm(
+            "Soll dieser Artikel wirklich gelöscht werden?"
+        );
+
+
+    if (!bestaetigt) {
+
+        return;
+    }
+
+
+    const {
+        error
+    } =
+        await supabaseClient
+            .from("artikel")
+            .delete()
+            .eq(
+                "barcode",
+                barcode
+            )
+            .eq(
+                "household_id",
+                aktuellerHaushaltId
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Fehler beim Löschen:",
+            error
+        );
+
+
+        alert(
+            "Artikel konnte nicht gelöscht werden."
+        );
+
+
+        return;
+    }
+
+
+    await artikelverwaltungAnzeigen(
+        manageSearch
+            ? manageSearch.value
+            : ""
+    );
+}
+
+
+/* =========================================================
+   AUTH STATUS
+========================================================= */
+
+supabaseClient.auth.onAuthStateChange(
+    async (
+        event,
+        session
+    ) => {
+
+        if (session) {
+
+            authArea
+                .classList
+                .add(
+                    "hidden"
+                );
+
+
+            householdArea
+                .classList
+                .add(
+                    "hidden"
+                );
+
+
+            appArea
+                .classList
+                .add(
+                    "hidden"
+                );
+
+
+            await haushaltPruefen();
+
+        } else {
+
+            aktuellerHaushaltId =
+                null;
+
+
+            aktuellerHaushalt =
+                null;
+
+
+            authArea
+                .classList
+                .remove(
+                    "hidden"
+                );
+
+
+            householdArea
+                .classList
+                .add(
+                    "hidden"
+                );
+
+
+            appArea
+                .classList
+                .add(
+                    "hidden"
+                );
+        }
+    }
+);
+
+
+/* =========================================================
+   START
+========================================================= */
+
+sessionPruefen();
