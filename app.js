@@ -3401,7 +3401,32 @@ async function haushalteZurAuswahlLaden() {
            ➕ Neuen Haushalt erstellen
        </button>
     `;
-    
+
+    const createNewHouseholdFromSwitch =
+    document.getElementById(
+        "createNewHouseholdFromSwitch"
+    );
+
+    if (createNewHouseholdFromSwitch) {
+
+        createNewHouseholdFromSwitch.addEventListener(
+            "click",
+            () => {
+
+                householdSelection.classList.add("hidden");
+
+                appArea.classList.add("hidden");
+
+                householdArea.classList.remove("hidden");
+
+                householdInfo.textContent =
+                     "Erstelle einen neuen Haushalt oder tritt einem bestehenden bei.";
+
+                householdName.value = "";
+            }
+        );
+    }
+
     householdSelection.classList.remove(
         "hidden"
     );
@@ -3478,30 +3503,6 @@ async function haushalteZurAuswahlLaden() {
         );
 }
 
-const createNewHouseholdFromSwitch =
-    document.getElementById(
-        "createNewHouseholdFromSwitch"
-    );
-
-if (createNewHouseholdFromSwitch) {
-
-    createNewHouseholdFromSwitch.addEventListener(
-        "click",
-        () => {
-
-            householdSelection.classList.add("hidden");
-
-            appArea.classList.add("hidden");
-
-            householdArea.classList.remove("hidden");
-
-            householdInfo.textContent =
-                "Erstelle einen neuen Haushalt oder tritt einem bestehenden bei.";
-
-            householdName.value = "";
-        }
-    );
-}
 
 
 /* =========================================================
