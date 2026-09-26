@@ -646,6 +646,10 @@ async function haushaltPruefen() {
    HAUSHALT ERSTELLEN
 ========================================================= */
 
+/* =========================================================
+   HAUSHALT ERSTELLEN
+========================================================= */
+
 createHouseholdButton.addEventListener(
     "click",
     async () => {
@@ -663,102 +667,51 @@ createHouseholdButton.addEventListener(
         }
 
 
-        const {
-            data: { user }
-        } =
-            await supabaseClient.auth.getUser();
-
-
-        if (!user) {
-
-            householdInfo.textContent =
-                "Du bist nicht angemeldet.";
-
-            return;
-        }
-
-
-        const inviteCode =
-            einladungscodeErzeugen();
+        householdInfo.textContent =
+            "Haushalt wird erstellt...";
 
 
         const {
-            data: neuerHaushalt,
-            error: haushaltFehler
+            data,
+            error
         } =
-            await supabaseClient
-                .from("households")
-                .insert({
-
-                    name:
-                        name,
-
-                    invite_code:
-                        inviteCode,
-
-                    owner_id:
-                        user.id
-                })
-                .select()
-                .single();
+            await supabaseClient.rpc(
+                "create_household",
+                {
+                    p_name: name
+                }
+            );
 
 
-        if (haushaltFehler) {
+        if (error) {
 
             console.error(
                 "Haushalt konnte nicht erstellt werden:",
-                haushaltFehler
+                error
             );
 
 
             householdInfo.textContent =
-                "Haushalt konnte nicht erstellt werden.";
+                "Haushalt konnte nicht erstellt werden: " +
+                error.message;
 
 
             return;
         }
 
 
-        const {
-            error: memberFehler
-        } =
-            await supabaseClient
-                .from("household_members")
-                .insert({
-
-                    household_id:
-                        neuerHaushalt.id,
-
-                    user_id:
-                        user.id,
-
-                    role:
-                        "owner"
-                });
-
-
-        if (memberFehler) {
-
-            console.error(
-                "Mitgliedschaft konnte nicht erstellt werden:",
-                memberFehler
-            );
-
-
-            householdInfo.textContent =
-                "Haushalt wurde erstellt, aber die Mitgliedschaft konnte nicht angelegt werden.";
-
-
-            return;
-        }
-
-
-        householdInfo.textContent =
-            "Haushalt erstellt ✓";
+        console.log(
+            "Haushalt erstellt:",
+            data
+        );
 
 
         householdName.value =
             "";
+
+
+        householdInfo.textContent =
+            "Haushalt erstellt ✓";
 
 
         await haushaltPruefen();
