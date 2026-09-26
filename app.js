@@ -2238,6 +2238,15 @@ async function bestandAnzeigen(
     suchtext = ""
 ) {
 
+    console.log(
+        "BESTAND WIRD GELADEN FÜR:",
+        aktuellerHaushaltId
+    );
+
+async function bestandAnzeigen(
+    suchtext = ""
+) {
+
     if (!aktuellerHaushaltId) {
 
         stockContent.innerHTML = `
@@ -3483,6 +3492,16 @@ async function haushalteZurAuswahlLaden() {
 
                         aktuellerHaushalt =
                             neueMitgliedschaft.households;
+
+                            console.log(
+    "NEUER HAUSHALT NAME:",
+    aktuellerHaushalt.name
+);
+
+console.log(
+    "NEUE HAUSHALT ID:",
+    aktuellerHaushaltId
+);
 
 
                         if (currentHousehold) {
