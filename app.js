@@ -3262,19 +3262,95 @@ if (showInviteCodeButton) {
                 !aktuellerHaushalt.invite_code
             ) {
 
-                inviteCodeDisplay.textContent =
-                    "Kein Einladungscode verfügbar.";
+                inviteCodeDisplay.innerHTML =
+                    "<p>Kein Einladungscode verfügbar.</p>";
 
                 inviteCodeDisplay.classList.remove("hidden");
 
                 return;
             }
 
-            inviteCodeDisplay.textContent =
-                "Einladungscode: " +
-                aktuellerHaushalt.invite_code;
+            inviteCodeDisplay.innerHTML = `
+                <div class="invite-code-box">
+
+                    <div>
+                        Einladungscode:
+                        <strong id="inviteCodeValue">
+                            ${escapeHtml(
+                                aktuellerHaushalt.invite_code
+                            )}
+                        </strong>
+                    </div>
+
+                    <button id="copyInviteCodeButton">
+                        📋 Code kopieren
+                    </button>
+
+                    <div
+                        id="copyInviteCodeInfo"
+                        class="hidden"
+                    >
+                    </div>
+
+                </div>
+            `;
 
             inviteCodeDisplay.classList.remove("hidden");
+
+
+            const copyInviteCodeButton =
+                document.getElementById(
+                    "copyInviteCodeButton"
+                );
+
+            const copyInviteCodeInfo =
+                document.getElementById(
+                    "copyInviteCodeInfo"
+                );
+
+
+            if (copyInviteCodeButton) {
+
+                copyInviteCodeButton.addEventListener(
+                    "click",
+                    async () => {
+
+                        try {
+
+                            await navigator.clipboard.writeText(
+                                aktuellerHaushalt.invite_code
+                            );
+
+                            if (copyInviteCodeInfo) {
+
+                                copyInviteCodeInfo.textContent =
+                                    "Code kopiert ✓";
+
+                                copyInviteCodeInfo.classList.remove(
+                                    "hidden"
+                                );
+                            }
+
+                        } catch (error) {
+
+                            console.error(
+                                "Kopieren fehlgeschlagen:",
+                                error
+                            );
+
+                            if (copyInviteCodeInfo) {
+
+                                copyInviteCodeInfo.textContent =
+                                    "Kopieren nicht möglich.";
+
+                                copyInviteCodeInfo.classList.remove(
+                                    "hidden"
+                                );
+                            }
+                        }
+                    }
+                );
+            }
         }
     );
 }
