@@ -8,6 +8,15 @@
    ELEMENTE
 ========================================================= */
 
+const showInviteCodeButton =
+    document.getElementById("showInviteCodeButton");
+
+const changeHouseholdButton =
+    document.getElementById("changeHouseholdButton");
+
+const inviteCodeDisplay =
+    document.getElementById("inviteCodeDisplay");
+
 const loggedInUser =
     document.getElementById("loggedInUser");
 
@@ -3230,6 +3239,57 @@ supabaseClient.auth.onAuthStateChange(
         }
     }
 );
+
+if (showInviteCodeButton) {
+
+    showInviteCodeButton.addEventListener(
+        "click",
+        () => {
+
+            if (!inviteCodeDisplay) {
+                return;
+            }
+
+            if (
+                !aktuellerHaushalt ||
+                !aktuellerHaushalt.invite_code
+            ) {
+
+                inviteCodeDisplay.textContent =
+                    "Kein Einladungscode verfügbar.";
+
+                inviteCodeDisplay.classList.remove("hidden");
+
+                return;
+            }
+
+            inviteCodeDisplay.textContent =
+                "Einladungscode: " +
+                aktuellerHaushalt.invite_code;
+
+            inviteCodeDisplay.classList.remove("hidden");
+        }
+    );
+}
+
+
+if (changeHouseholdButton) {
+
+    changeHouseholdButton.addEventListener(
+        "click",
+        async () => {
+
+            await alleBereicheSchliessen();
+
+            appArea.classList.add("hidden");
+
+            householdArea.classList.remove("hidden");
+
+            householdInfo.textContent =
+                "Erstelle einen neuen Haushalt oder tritt einem bestehenden bei.";
+        }
+    );
+}
 
 
 /* =========================================================
