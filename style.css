@@ -391,6 +391,6 @@ button:hover {
 
 .household-actions {
     display: grid;
-    gap: 14px;
+    gap: 20px;
     margin-bottom: 25px;
 }
