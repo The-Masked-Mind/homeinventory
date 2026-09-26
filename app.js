@@ -8,6 +8,10 @@
    ELEMENTE
 ========================================================= */
 
+
+const householdSelection =
+    document.getElementById("householdSelection");
+
 const showInviteCodeButton =
     document.getElementById("showInviteCodeButton");
 
@@ -3284,14 +3288,190 @@ if (changeHouseholdButton) {
 
             await alleBereicheSchliessen();
 
-            appArea.classList.add("hidden");
-
-            householdArea.classList.remove("hidden");
-
-            householdInfo.textContent =
-                "Erstelle einen neuen Haushalt oder tritt einem bestehenden bei.";
+            await haushalteZurAuswahlLaden();
         }
     );
+}
+
+async function haushalteZurAuswahlLaden() {
+
+    const {
+        data: { user },
+        error: userFehler
+    } =
+        await supabaseClient.auth.getUser();
+
+
+    if (userFehler || !user) {
+
+        console.error(
+            "Benutzer konnte nicht geladen werden:",
+            userFehler
+        );
+
+        return;
+    }
+
+
+    const {
+        data: mitgliedschaften,
+        error
+    } =
+        await supabaseClient
+            .from("household_members")
+            .select(`
+                household_id,
+                role,
+                households (
+                    id,
+                    name,
+                    invite_code
+                )
+            `)
+            .eq(
+                "user_id",
+                user.id
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Haushalte konnten nicht geladen werden:",
+            error
+        );
+
+        householdSelection.innerHTML =
+            "<p>Haushalte konnten nicht geladen werden.</p>";
+
+        householdSelection.classList.remove("hidden");
+
+        return;
+    }
+
+
+    if (
+        !mitgliedschaften ||
+        mitgliedschaften.length === 0
+    ) {
+
+        householdSelection.innerHTML =
+            "<p>Du bist noch keinem Haushalt zugeordnet.</p>";
+
+        householdSelection.classList.remove("hidden");
+
+        return;
+    }
+
+
+    householdSelection.innerHTML = `
+        <h3>Haushalt auswählen</h3>
+
+        ${mitgliedschaften
+            .map(
+                mitgliedschaft => {
+
+                    const haushalt =
+                        mitgliedschaft.households;
+
+                    if (!haushalt) {
+                        return "";
+                    }
+
+                    const aktiv =
+                        haushalt.id ===
+                        aktuellerHaushaltId;
+
+                    return `
+                        <button
+                            class="householdSelectButton"
+                            data-id="${escapeHtml(haushalt.id)}"
+                        >
+                            🏠
+                            ${escapeHtml(haushalt.name)}
+                            ${aktiv ? " ✓" : ""}
+                        </button>
+                    `;
+                }
+            )
+            .join("")}
+    `;
+
+
+    householdSelection.classList.remove(
+        "hidden"
+    );
+
+
+    document
+        .querySelectorAll(
+            ".householdSelectButton"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const neueId =
+                            button.dataset.id;
+
+                        const neueMitgliedschaft =
+                            mitgliedschaften.find(
+                                eintrag =>
+                                    eintrag.household_id ===
+                                    neueId
+                            );
+
+
+                        if (
+                            !neueMitgliedschaft ||
+                            !neueMitgliedschaft.households
+                        ) {
+
+                            return;
+                        }
+
+
+                        aktuellerHaushaltId =
+                            neueMitgliedschaft.household_id;
+
+                        aktuellerHaushalt =
+                            neueMitgliedschaft.households;
+
+
+                        if (currentHousehold) {
+
+                            currentHousehold.textContent =
+                                aktuellerHaushalt.name;
+                        }
+
+
+                        if (inviteCodeDisplay) {
+
+                            inviteCodeDisplay.classList.add(
+                                "hidden"
+                            );
+
+                            inviteCodeDisplay.innerHTML =
+                                "";
+                        }
+
+
+                        householdSelection.classList.add(
+                            "hidden"
+                        );
+
+
+                        console.log(
+                            "Haushalt gewechselt:",
+                            aktuellerHaushalt
+                        );
+                    }
+                );
+            }
+        );
 }
 
 
