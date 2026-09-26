@@ -171,10 +171,86 @@ let aktuellerHaushaltId = null;
 
 let aktuellerHaushalt = null;
 
+const AUSGEWAEHLTER_HAUSHALT_KEY =
+    "homeinventory_selected_household_id";
+
 
 /* =========================================================
    HILFSFUNKTIONEN
 ========================================================= */
+
+function ausgewaehltenHaushaltMerken(haushaltId) {
+
+    if (!haushaltId) {
+        return;
+    }
+
+    try {
+        localStorage.setItem(
+            AUSGEWAEHLTER_HAUSHALT_KEY,
+            haushaltId
+        );
+    } catch (error) {
+        console.warn(
+            "Ausgewählter Haushalt konnte nicht gespeichert werden:",
+            error
+        );
+    }
+}
+
+function gemerktenHaushaltLaden() {
+
+    try {
+        return localStorage.getItem(
+            AUSGEWAEHLTER_HAUSHALT_KEY
+        );
+    } catch (error) {
+        console.warn(
+            "Gespeicherter Haushalt konnte nicht geladen werden:",
+            error
+        );
+        return null;
+    }
+}
+
+function gemerktenHaushaltLoeschen() {
+
+    try {
+        localStorage.removeItem(
+            AUSGEWAEHLTER_HAUSHALT_KEY
+        );
+    } catch (error) {
+        console.warn(
+            "Gespeicherter Haushalt konnte nicht gelöscht werden:",
+            error
+        );
+    }
+}
+
+async function textInZwischenablageKopieren(text) {
+
+    if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+    }
+
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    textarea.style.pointerEvents = "none";
+
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+
+    const erfolgreich = document.execCommand("copy");
+    textarea.remove();
+
+    if (!erfolgreich) {
+        throw new Error("Kopieren wurde vom Browser nicht unterstützt.");
+    }
+}
 
 function escapeHtml(wert) {
 
@@ -488,6 +564,8 @@ logoutButton.addEventListener(
 
         aktuellerHaushalt = null;
 
+        gemerktenHaushaltLoeschen();
+
 
         authArea.classList.remove("hidden");
 
@@ -630,6 +708,8 @@ async function haushaltPruefen() {
 
         aktuellerHaushalt = null;
 
+        gemerktenHaushaltLoeschen();
+
 
         authArea.classList.add("hidden");
 
@@ -646,8 +726,36 @@ async function haushaltPruefen() {
     }
 
 
+    const gemerkteHaushaltId =
+        gemerktenHaushaltLaden();
+
     const mitgliedschaft =
-        mitgliedschaften[0];
+        mitgliedschaften.find(
+            eintrag =>
+                eintrag.household_id ===
+                gemerkteHaushaltId &&
+                eintrag.households
+        ) ||
+        mitgliedschaften.find(
+            eintrag => eintrag.households
+        );
+
+
+    if (!mitgliedschaft) {
+
+        aktuellerHaushaltId = null;
+        aktuellerHaushalt = null;
+        gemerktenHaushaltLoeschen();
+
+        authArea.classList.add("hidden");
+        householdArea.classList.remove("hidden");
+        appArea.classList.add("hidden");
+
+        householdInfo.textContent =
+            "Kein gültiger Haushalt gefunden.";
+
+        return;
+    }
 
 
     aktuellerHaushaltId =
@@ -656,6 +764,10 @@ async function haushaltPruefen() {
 
     aktuellerHaushalt =
         mitgliedschaft.households;
+
+    ausgewaehltenHaushaltMerken(
+        aktuellerHaushaltId
+    );
 
         
     if (loggedInUser) {
@@ -760,6 +872,18 @@ createHouseholdButton.addEventListener(
             "Haushalt erstellt ✓";
 
 
+        const neuerHaushalt =
+            Array.isArray(data)
+                ? data[0]
+                : data;
+
+        if (neuerHaushalt?.id) {
+            ausgewaehltenHaushaltMerken(
+                neuerHaushalt.id
+            );
+        }
+
+
         await haushaltPruefen();
     }
 );
@@ -821,6 +945,10 @@ joinHouseholdButton.addEventListener(
         aktuellerHaushaltId =
             data;
 
+        ausgewaehltenHaushaltMerken(
+            aktuellerHaushaltId
+        );
+
 
         inviteCodeInput.value =
             "";
@@ -865,6 +993,8 @@ householdLogoutButton.addEventListener(
         aktuellerHaushaltId = null;
 
         aktuellerHaushalt = null;
+
+        gemerktenHaushaltLoeschen();
 
 
         householdName.value = "";
@@ -3277,19 +3407,84 @@ if (showInviteCodeButton) {
                 !aktuellerHaushalt.invite_code
             ) {
 
-                inviteCodeDisplay.textContent =
-                    "Kein Einladungscode verfügbar.";
+                inviteCodeDisplay.innerHTML =
+                    "<p>Kein Einladungscode verfügbar.</p>";
 
                 inviteCodeDisplay.classList.remove("hidden");
 
                 return;
             }
 
-            inviteCodeDisplay.textContent =
-                "Einladungscode: " +
+            const code =
                 aktuellerHaushalt.invite_code;
 
+            inviteCodeDisplay.innerHTML = `
+                <div class="invite-code-box">
+                    <div>
+                        Einladungscode:
+                        <strong>${escapeHtml(code)}</strong>
+                    </div>
+
+                    <button id="copyInviteCodeButton">
+                        📋 Code kopieren
+                    </button>
+
+                    <div
+                        id="copyInviteCodeInfo"
+                        class="hidden"
+                    ></div>
+                </div>
+            `;
+
             inviteCodeDisplay.classList.remove("hidden");
+
+            const copyInviteCodeButton =
+                document.getElementById(
+                    "copyInviteCodeButton"
+                );
+
+            const copyInviteCodeInfo =
+                document.getElementById(
+                    "copyInviteCodeInfo"
+                );
+
+            if (copyInviteCodeButton) {
+
+                copyInviteCodeButton.addEventListener(
+                    "click",
+                    async () => {
+
+                        try {
+                            await textInZwischenablageKopieren(
+                                code
+                            );
+
+                            if (copyInviteCodeInfo) {
+                                copyInviteCodeInfo.textContent =
+                                    "Code kopiert ✓";
+                                copyInviteCodeInfo.classList.remove(
+                                    "hidden"
+                                );
+                            }
+
+                        } catch (error) {
+
+                            console.error(
+                                "Kopieren fehlgeschlagen:",
+                                error
+                            );
+
+                            if (copyInviteCodeInfo) {
+                                copyInviteCodeInfo.textContent =
+                                    "Kopieren nicht möglich.";
+                                copyInviteCodeInfo.classList.remove(
+                                    "hidden"
+                                );
+                            }
+                        }
+                    }
+                );
+            }
         }
     );
 }
@@ -3483,6 +3678,10 @@ async function haushalteZurAuswahlLaden() {
 
                         aktuellerHaushalt =
                             neueMitgliedschaft.households;
+
+                        ausgewaehltenHaushaltMerken(
+                            aktuellerHaushaltId
+                        );
 
 
                         if (currentHousehold) {
