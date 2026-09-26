@@ -3395,12 +3395,13 @@ async function haushalteZurAuswahlLaden() {
                 }
             )
             .join("")}
+   
+
+       <button id="createNewHouseholdFromSwitch">
+           ➕ Neuen Haushalt erstellen
+       </button>
     `;
-
-    <button id="createNewHouseholdFromSwitch">
-        ➕ Neuen Haushalt erstellen
-    </button>
-
+    
     householdSelection.classList.remove(
         "hidden"
     );
