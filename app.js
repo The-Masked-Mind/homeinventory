@@ -186,6 +186,17 @@ function escapeHtml(wert) {
         .replaceAll("'", "&#039;");
 }
 
+function zumScanErgebnisScrollen() {
+
+    setTimeout(() => {
+
+        scanResult.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+    }, 150);
+}
 
 async function alleBereicheSchliessen() {
 
@@ -1071,6 +1082,8 @@ manualSearchButton.addEventListener(
         await produktSuchen(
             barcode
         );
+
+        zumScanErgebnisScrollen();
     }
 );
 
@@ -1186,9 +1199,11 @@ async function barcodeErkannt(
     `;
 
 
-    await produktSuchen(
-        barcode
-    );
+await produktSuchen(
+    barcode
+);
+
+zumScanErgebnisScrollen();
 }
 
 
@@ -3262,95 +3277,19 @@ if (showInviteCodeButton) {
                 !aktuellerHaushalt.invite_code
             ) {
 
-                inviteCodeDisplay.innerHTML =
-                    "<p>Kein Einladungscode verfügbar.</p>";
+                inviteCodeDisplay.textContent =
+                    "Kein Einladungscode verfügbar.";
 
                 inviteCodeDisplay.classList.remove("hidden");
 
                 return;
             }
 
-            inviteCodeDisplay.innerHTML = `
-                <div class="invite-code-box">
-
-                    <div>
-                        Einladungscode:
-                        <strong id="inviteCodeValue">
-                            ${escapeHtml(
-                                aktuellerHaushalt.invite_code
-                            )}
-                        </strong>
-                    </div>
-
-                    <button id="copyInviteCodeButton">
-                        📋 Code kopieren
-                    </button>
-
-                    <div
-                        id="copyInviteCodeInfo"
-                        class="hidden"
-                    >
-                    </div>
-
-                </div>
-            `;
+            inviteCodeDisplay.textContent =
+                "Einladungscode: " +
+                aktuellerHaushalt.invite_code;
 
             inviteCodeDisplay.classList.remove("hidden");
-
-
-            const copyInviteCodeButton =
-                document.getElementById(
-                    "copyInviteCodeButton"
-                );
-
-            const copyInviteCodeInfo =
-                document.getElementById(
-                    "copyInviteCodeInfo"
-                );
-
-
-            if (copyInviteCodeButton) {
-
-                copyInviteCodeButton.addEventListener(
-                    "click",
-                    async () => {
-
-                        try {
-
-                            await navigator.clipboard.writeText(
-                                aktuellerHaushalt.invite_code
-                            );
-
-                            if (copyInviteCodeInfo) {
-
-                                copyInviteCodeInfo.textContent =
-                                    "Code kopiert ✓";
-
-                                copyInviteCodeInfo.classList.remove(
-                                    "hidden"
-                                );
-                            }
-
-                        } catch (error) {
-
-                            console.error(
-                                "Kopieren fehlgeschlagen:",
-                                error
-                            );
-
-                            if (copyInviteCodeInfo) {
-
-                                copyInviteCodeInfo.textContent =
-                                    "Kopieren nicht möglich.";
-
-                                copyInviteCodeInfo.classList.remove(
-                                    "hidden"
-                                );
-                            }
-                        }
-                    }
-                );
-            }
         }
     );
 }
