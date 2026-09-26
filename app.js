@@ -8,6 +8,12 @@
    ELEMENTE
 ========================================================= */
 
+const loggedInUser =
+    document.getElementById("loggedInUser");
+
+const currentHousehold =
+    document.getElementById("currentHousehold");
+
 const googleLoginButton =
     document.getElementById("googleLoginButton");
 
@@ -639,6 +645,19 @@ async function haushaltPruefen() {
         "Aktueller Haushalt:",
         aktuellerHaushalt
     );
+}
+
+if (loggedInUser) {
+
+    loggedInUser.textContent =
+        user.email || "Unbekannter Benutzer";
+}
+
+if (currentHousehold) {
+
+    currentHousehold.textContent =
+        aktuellerHaushalt?.name ||
+        "Kein Haushalt";
 }
 
 

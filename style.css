@@ -372,3 +372,19 @@ button:hover {
     border-top: 1px solid #374151;
     margin: 10px 0;
 }
+
+.user-info {
+    margin: 15px 0 25px 0;
+    padding: 15px;
+    background: #1f2937;
+    border-radius: 12px;
+    display: grid;
+    gap: 8px;
+    font-size: 15px;
+}
+
+.user-info div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
