@@ -3651,7 +3651,7 @@ async function haushalteZurAuswahlLaden() {
 
                 button.addEventListener(
                     "click",
-                    () => {
+                    async () => {
 
                         const neueId =
                             button.dataset.id;
@@ -3711,6 +3711,7 @@ async function haushalteZurAuswahlLaden() {
                             "Haushalt gewechselt:",
                             aktuellerHaushalt
                         );
+                        await haushalteZurAuswahlLaden();
                     }
                 );
             }
