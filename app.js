@@ -642,6 +642,20 @@ async function haushaltPruefen() {
     aktuellerHaushalt =
         mitgliedschaft.households;
 
+        
+    if (loggedInUser) {
+
+        loggedInUser.textContent =
+            user.email || "Unbekannter Benutzer";
+    }
+
+    if (currentHousehold) {
+
+        currentHousehold.textContent =
+            aktuellerHaushalt?.name ||
+            "Kein Haushalt";
+    }
+
 
     authArea.classList.add("hidden");
 
@@ -656,18 +670,7 @@ async function haushaltPruefen() {
     );
 }
 
-if (loggedInUser) {
 
-    loggedInUser.textContent =
-        user.email || "Unbekannter Benutzer";
-}
-
-if (currentHousehold) {
-
-    currentHousehold.textContent =
-        aktuellerHaushalt?.name ||
-        "Kein Haushalt";
-}
 
 
 /* =========================================================
