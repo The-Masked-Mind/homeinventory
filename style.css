@@ -388,3 +388,9 @@ button:hover {
     align-items: center;
     gap: 8px;
 }
+
+.household-actions {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 25px;
+}
